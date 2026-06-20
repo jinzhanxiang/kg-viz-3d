@@ -61,7 +61,7 @@ body{font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;backgr
 
 <div id="svg"></div>
 
-<div id="info">🌌 <strong id="gTitle">知识图谱星系</strong><span id="gLvl" style="color:#666;margin-left:8px">加载中</span><span class="badge" id="focusBadge">🔍 聚焦中</span></div>
+<div id="info">🌌 <strong id="gTitle">知识图谱星系</strong><span id="gLvl" style="color:#666;margin-left:8px">加载中</span><span class="badge" id="focusBadge">🔍 聚焦中</span><span id="backBtn" style="display:none;margin-left:8px;cursor:pointer;color:#4A90D9;font-size:11px;" onclick="backToGalaxy()">← 返回银河系</span></div>
 <input id="search" placeholder="🔍 搜索...">
 <div id="legend">
   <div class="legend-item"><div class="legend-dot" style="background:#FF6B6B"></div><div class="legend-label">核心节点</div></div>
@@ -162,6 +162,7 @@ function renderGalaxy() {
   curGal = null;
   curFocus = null;
   connectedIds = null;
+  document.getElementById('backBtn').style.display = 'none';
   if (focusTimer) { clearTimeout(focusTimer); focusTimer = null; }
 
   document.getElementById('gTitle').textContent = '知识图谱星系';
@@ -203,6 +204,7 @@ function renderGalaxy() {
   var node = g.append('g').attr('class', 'nodes').selectAll('g')
     .data(nodes).enter().append('g')
     .attr('class', 'node')
+    .attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; })
     .call(d3.drag()
       .on('start', dragStarted)
       .on('drag', dragged)
@@ -284,6 +286,7 @@ function solar(galName) {
 
   document.getElementById('gTitle').textContent = galName;
   document.getElementById('gLvl').textContent = '☉ 太阳系';
+  document.getElementById('backBtn').style.display = 'inline-block';
   document.getElementById('focusBadge').classList.remove('active');
   document.getElementById('highlight-panel').style.display = 'none';
   document.getElementById('focus-hint').style.display = 'none';
@@ -739,6 +742,114 @@ function exitFocus() {
   document.getElementById('highlight-panel').style.display = 'none';
   document.getElementById('gTitle').textContent = curGal || '知识图谱星系';
   document.getElementById('gLvl').textContent = curLv === 'gal' ? '银河系 · ' + GAL.length + '个' : '☉ 太阳系';
+}
+
+// ===== 返回银河系（带过渡动画）=====
+function backToGalaxy() {
+  if (focusTimer) { clearTimeout(focusTimer); focusTimer = null; }
+  // 记忆当前太阳系节点位置（用于逆向 GrowCircle）
+  var fromPos = {};
+  try {
+    d3.selectAll('.node').each(function(d) {
+      if (d && d.name && typeof d.x === 'number') {
+        fromPos[d.name] = { x: d.x, y: d.y };
+      }
+    });
+  } catch(e) {}
+
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('loadInfo').textContent = '返回银河系 ...';
+  curLv = 'gal';
+  curGal = null;
+  curFocus = null;
+  connectedIds = null;
+  document.getElementById('backBtn').style.display = 'none';
+  document.getElementById('focusBadge').classList.remove('active');
+  document.getElementById('focus-hint').style.display = 'none';
+  document.getElementById('highlight-panel').style.display = 'none';
+  document.getElementById('gTitle').textContent = '知识图谱星系';
+  document.getElementById('gLvl').textContent = '银河系 · ' + GAL.length + '个行业';
+
+  // 创建银河系节点数据
+  var nodes = GAL.map(function(d, i) {
+    var angle = (i / GAL.length) * Math.PI * 2;
+    var radius = Math.min(W, H) * 0.35;
+    var targetX = W/2 + Math.cos(angle) * radius;
+    var targetY = H/2 + Math.sin(angle) * radius;
+    var start = fromPos[d.name] || { x: W/2, y: H/2 };
+    return {
+      id: d.name,
+      name: d.name,
+      nodeType: 'gal',
+      color: d.color,
+      count: d.count,
+      val: Math.max(15, Math.min(30, Math.log(d.count) * 5)),
+      x: start.x,
+      y: start.y,
+      fx: targetX,
+      fy: targetY,
+      tx: targetX,
+      ty: targetY
+    };
+  });
+
+  var links = [];
+  initSVG();
+  var g = d3.select('#g');
+
+  // 渲染连线
+  var link = g.append('g').attr('class', 'links').selectAll('line')
+    .data(links).enter().append('line')
+    .attr('stroke', '#555').attr('stroke-width', 1).attr('opacity', 0);
+
+  // 渲染节点
+  var node = g.append('g').attr('class', 'nodes').selectAll('g')
+    .data(nodes).enter().append('g')
+    .attr('class', 'node')
+    .attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; })
+    .style('opacity', 0)
+    .call(d3.drag()
+      .on('start', dragStarted)
+      .on('drag', dragged)
+      .on('end', dragEnded));
+
+  node.append('circle')
+    .attr('r', function(d) { return d.val; })
+    .attr('fill', function(d) { return d.color; })
+    .attr('stroke', '#fff').attr('stroke-width', 1)
+    .attr('opacity', 0);
+
+  node.append('text')
+    .attr('dy', function(d) { return d.val + 12; })
+    .attr('text-anchor', 'middle')
+    .attr('fill', '#ddd').attr('font-size', '10px')
+    .text(function(d) { return d.name + '\n' + '(' + d.count + '家)'; });
+
+  node.on('click', function(event, d) { solar(d.name); });
+  node.on('mouseover', function(event, d) {
+    var t = document.getElementById('tooltip');
+    t.style.display = 'block';
+    t.innerHTML = '<div class="tt-name">' + d.name + '</div><div class="tt-type">行业 · ' + d.count + '家企业</div>';
+    t.style.left = (event.pageX + 10) + 'px';
+    t.style.top = (event.pageY - 10) + 'px';
+  });
+  node.on('mouseout', function() { document.getElementById('tooltip').style.display = 'none'; });
+
+  updateStats(nodes.length, links.length);
+  document.getElementById('loading').style.display = 'none';
+
+  // 逆向 GrowCircle 动画：从当前位置飞到圆形布局
+  node.transition().duration(800).ease(d3.easeCubicOut)
+    .style('opacity', 1)
+    .attrTween('transform', function(d) {
+      var startX = d.x, startY = d.y;
+      var endX = d.tx, endY = d.ty;
+      return function(t) {
+        return 'translate(' + (startX + (endX - startX) * t) + ',' + (startY + (endY - startY) * t) + ')';
+      };
+    });
+
+  d3.selectAll('.node circle').transition().duration(800).attr('opacity', 0.85);
 }
 
 // ===== 数据加载 =====
