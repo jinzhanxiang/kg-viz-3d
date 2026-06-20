@@ -146,6 +146,7 @@ var GAL = [
 var ENT = null, EDG = null, EIX = null, em = {};
 var svg = null, g = null, zoom = null;
 var curLv = 'gal', curGal = null, curFocus = null, connectedIds = null;
+var curEdges = []; // 当前视图的关系边（用于聚焦模式）
 var simulation = null;
 var focusTimer = null;
 var W = window.innerWidth, H = window.innerHeight;
@@ -420,6 +421,9 @@ function solar(galName) {
         });
       }
     });
+
+    // 保存当前边数据供聚焦模式使用
+    curEdges = links.slice();
 
     // ② GrowCircle：所有节点初始聚集到银河系点击位置
     nodes.forEach(function(n) {
@@ -696,21 +700,71 @@ function doFocusMode(node) {
   document.getElementById('focusBadge').classList.add('active');
   document.getElementById('focus-hint').style.display = 'block';
 
-  // 收集相关节点和连线
+  // 收集相关节点和连线（从 EIX + 当前视图边）
   var ids = new Set();
   ids.add(node.id);
   var rels = [];
+  var seen = {};
 
-  var nodeEdges = EIX[node.id] || [];
-  nodeEdges.forEach(function(l) {
-    var srcId = typeof l.source === 'object' ? l.source.id : l.source;
-    var tgtId = typeof l.target === 'object' ? l.target.id : l.target;
-    if (srcId === node.id || tgtId === node.id) {
+  // 来源1：EIX（跨行业关系索引）
+  if (EIX) {
+    var nodeEdges = EIX[node.id] || [];
+    nodeEdges.forEach(function(l) {
+      var srcId = typeof l.source === 'object' ? l.source.id : l.source;
+      var tgtId = typeof l.target === 'object' ? l.target.id : l.target;
       var otherId = srcId === node.id ? tgtId : srcId;
-      ids.add(otherId);
-      rels.push({ otherId: otherId, arrow: srcId === node.id ? '→' : '←', type: l.type || '关联', color: l.color || '#888' });
-    }
-  });
+      var key = otherId + '|' + (l.type || '关联');
+      if (!seen[key]) {
+        seen[key] = true;
+        ids.add(otherId);
+        rels.push({ otherId: otherId, arrow: srcId === node.id ? '→' : '←', type: l.type || '关联', color: l.color || '#888' });
+      }
+    });
+  }
+
+  // 来源2：当前视图的关系边（同行业关系）
+  if (curEdges && curEdges.length) {
+    curEdges.forEach(function(l) {
+      var srcId = typeof l.source === 'object' ? l.source.id : l.source;
+      var tgtId = typeof l.target === 'object' ? l.target.id : l.target;
+      if (l.isHierarchy) return; // 跳过层级关系
+      if (srcId === node.id) {
+        var key = tgtId + '|' + (l.type || '关联');
+        if (!seen[key]) {
+          seen[key] = true;
+          ids.add(tgtId);
+          rels.push({ otherId: tgtId, arrow: '→', type: l.type || '关联', color: l.color || '#888' });
+        }
+      } else if (tgtId === node.id) {
+        var key = srcId + '|' + (l.type || '关联');
+        if (!seen[key]) {
+          seen[key] = true;
+          ids.add(srcId);
+          rels.push({ otherId: srcId, arrow: '←', type: l.type || '关联', color: l.color || '#888' });
+        }
+      }
+    });
+  }
+
+  // 如果在两个来源都找不到关系，尝试从 EIX 反查（找到与 node 有关系的其他 EIX key）
+  if (rels.length === 0 && EIX) {
+    Object.keys(EIX).forEach(function(key) {
+      var edges = EIX[key];
+      edges.forEach(function(l) {
+        var srcId = typeof l.source === 'object' ? l.source.id : l.source;
+        var tgtId = typeof l.target === 'object' ? l.target.id : l.target;
+        if (srcId === node.id || tgtId === node.id) {
+          var otherId = srcId === node.id ? tgtId : srcId;
+          var rkey = otherId + '|' + (l.type || '关联');
+          if (!seen[rkey]) {
+            seen[rkey] = true;
+            ids.add(otherId);
+            rels.push({ otherId: otherId, arrow: srcId === node.id ? '→' : '←', type: l.type || '关联', color: l.color || '#888' });
+          }
+        }
+      });
+    });
+  }
 
   connectedIds = ids;
 
