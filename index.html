@@ -245,8 +245,12 @@ function solar(galName) {
       });
       
       var el = edges.filter(function(e) { return nid[e.source] && nid[e.target]; }).map(function(e) {
-        return { source: e.source, target: e.target, type: e.type, color: e.color };
-      });
+        // Use node object references instead of string IDs
+        var srcNode = nodes.find(function(n) { return n.id === e.source; });
+        var tgtNode = nodes.find(function(n) { return n.id === e.target; });
+        if (!srcNode || !tgtNode) return null;
+        return { source: srcNode, target: tgtNode, type: e.type, color: e.color };
+      }).filter(function(e) { return e !== null; });
       
       render3d(nodes, el, {
         obj: function(n) {
@@ -300,8 +304,8 @@ function render3d(nodes, edges, opt) {
     var linkColorFn = opt.linkColor || function(l) { return l.color || '#888'; };
     
     g = ForceGraph3D({ rendererConfig: { antialias: true } })(document.getElementById('graph-container'))
-      .graphData({ nodes: nodes, links: edges })
       .nodeId('id')
+      .graphData({ nodes: nodes, links: edges })
       .nodeColor(function(n) { return n.color || '#888'; })
       .nodeVal(function(n) { return n.val || 3; })
       .nodeOpacity(0.9)
