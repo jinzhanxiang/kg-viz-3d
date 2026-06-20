@@ -261,6 +261,22 @@ function solar(galName) {
   document.getElementById('loading').style.display = 'flex';
   document.getElementById('loadInfo').textContent = '正在加载 ' + galName + ' ...';
 
+  // ① 记忆银河系节点位置（用于 GrowCircle 过渡动画）
+  var galPositions = {};
+  try {
+    d3.selectAll('.node > circle').each(function(d) {
+      if (d && d.nodeType === 'gal' && d.id) {
+        var nodeEl = this.parentNode;
+        var t = nodeEl.getAttribute('transform');
+        if (t) {
+          var m = t.match(/translate\(([\d.]+),([\d.]+)\)/);
+          if (m) { galPositions[d.id] = { x: +m[1], y: +m[2] }; }
+        }
+      }
+    });
+  } catch(e) {}
+  var startPos = galPositions[galName] || { x: W/2, y: H/2 };
+
   curLv = 'sol';
   curGal = galName;
   curFocus = null;
@@ -354,6 +370,14 @@ function solar(galName) {
       }
     });
 
+    // ② GrowCircle：所有节点初始聚集到银河系点击位置
+    nodes.forEach(function(n) {
+      var angle = Math.random() * Math.PI * 2;
+      var dist = 3 + Math.random() * 12;
+      n.x = startPos.x + Math.cos(angle) * dist;
+      n.y = startPos.y + Math.sin(angle) * dist;
+    });
+
     renderForceGraph(nodes, links, {
       label: function(n) {
         if (n.nodeType === 'gal') return n.name + '\n(' + n.count + '家)';
@@ -374,7 +398,10 @@ function solar(galName) {
     });
 
     updateStats(nodes.length, links.length);
-    document.getElementById('loading').style.display = 'none';
+    // GrowCircle：延迟隐藏加载，让用户看到节点从聚集处向外扩散的过程
+    setTimeout(function() {
+      document.getElementById('loading').style.display = 'none';
+    }, 600);
   });
 }
 
@@ -427,19 +454,20 @@ function renderForceGraph(nodes, links, options) {
     options.focusNode.fy = H/2;
   }
 
-  // 渲染连线
+  // 渲染连线 — 从透明淡入
   var link = g.append('g').attr('class', 'links')
     .selectAll('line')
     .data(links).enter().append('line')
     .attr('stroke', options.linkColor || '#888')
     .attr('stroke-width', options.linkWidth || 1)
-    .attr('opacity', options.linkOpacity || 0.5);
+    .attr('opacity', 0);  // 初始透明
 
-  // 渲染节点
+  // 渲染节点 — 从透明淡入
   var node = g.append('g').attr('class', 'nodes')
     .selectAll('g')
     .data(nodes).enter().append('g')
     .attr('class', 'node')
+    .style('opacity', 0)  // 初始透明
     .call(d3.drag()
       .on('start', dragStarted2)
       .on('drag', dragged2)
@@ -489,8 +517,16 @@ function renderForceGraph(nodes, links, options) {
     document.getElementById('tooltip').style.display = 'none';
   });
 
-  //  ticking 更新位置
+  // ticking 更新位置 + 首次淡入
+  var hasFadedIn = false;
   simulation.on('tick', function() {
+    // 首次 tick：触发淡入
+    if (!hasFadedIn && link.size() > 0) {
+      hasFadedIn = true;
+      node.transition().duration(800).style('opacity', 1);
+      link.transition().duration(800).attr('opacity', options.linkOpacity || 0.5);
+    }
+
     link
       .attr('x1', function(d) { return d.source.x; })
       .attr('y1', function(d) { return d.source.y; })
