@@ -186,7 +186,6 @@ function boot(glrData) {
   render3d(nodes, [], {
     label: function(n) { return n.name + '\n' + n.count + '家'; },
     obj: function(n) { return makeGlowNode(n.color, n.val / 2.5, n.name + '(' + n.count + ')', '#fff'); },
-    cam: { x: 0, y: 0, z: 350 },
     phys: false,
     linkOpacity: 0.0,
     linkWidth: 0
@@ -256,7 +255,6 @@ function solar(galName) {
         },
         focusable: true,
         label: function(n) { return n.name + (n.typeLabel ? '\n' + n.typeLabel : ''); },
-        cam: { x: -30, y: 0, z: 60 },
         phys: false,
         linkOpacity: 0.8,
         linkWidth: function(l) { return l.type === '关联' ? 3 : 6; }
@@ -338,11 +336,8 @@ function render3d(nodes, edges, opt) {
     setTimeout(function() {
       g.controls().autoRotate = true;
       g.controls().autoRotateSpeed = 0.4;
+      fitCamera();
     }, 200);
-    
-    setTimeout(function() {
-      g.cameraPosition(opt.cam || { x: 0, y: 0, z: 200 }, { x: 0, y: 0, z: 0 }, 1800);
-    }, 300);
     
     g.onNodeClick(function(n) {
       if (curLv === 'gal') {
@@ -451,7 +446,34 @@ function doFocusMode(node) {
   }, 800);
 }
 
-// ===== 详情 =====
+// ===== 自适应相机（适配所有屏幕比例）=====
+function fitCamera(margin) {
+  margin = margin || 1.8;
+  if (!g) return;
+  var d = g.graphData();
+  if (!d.nodes.length) return;
+  var bounds = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity, minZ: Infinity, maxZ: -Infinity };
+  d.nodes.forEach(function(n) {
+    if (n.x < bounds.minX) bounds.minX = n.x;
+    if (n.x > bounds.maxX) bounds.maxX = n.x;
+    if (n.y < bounds.minY) bounds.minY = n.y;
+    if (n.y > bounds.maxY) bounds.maxY = n.y;
+    if (n.z < bounds.minZ) bounds.minZ = n.z;
+    if (n.z > bounds.maxZ) bounds.maxZ = n.z;
+  });
+  var sizeX = bounds.maxX - bounds.minX || 1;
+  var sizeY = bounds.maxY - bounds.minY || 1;
+  var sizeZ = bounds.maxZ - bounds.minZ || 1;
+  var maxSize = Math.max(sizeX, sizeY, sizeZ);
+  // Perspective camera FOV=45°, tan(22.5°)≈0.414
+  var dist = (maxSize / 2) / Math.tan(Math.PI / 8) * margin;
+  var cx = (bounds.minX + bounds.maxX) / 2;
+  var cy = (bounds.minY + bounds.maxY) / 2;
+  var cz = (bounds.minZ + bounds.maxZ) / 2;
+  setTimeout(function() {
+    g.cameraPosition({ x: cx, y: cy, z: cz + dist }, { x: cx, y: cy, z: cz }, 0);
+  }, 50);
+}
 function showD(n) {
   if (!EIX || !EIX[n.id]) {
     // Try loading edgeIndex
