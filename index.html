@@ -77,6 +77,12 @@ body{font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;backgr
   #highlight-panel .hp-count{font-size:9px}
   #highlight-panel .hp-item{font-size:10px}
 }
+@media (max-width: 600px) {
+  /* 移动端：行星节点标签默认隐藏，点击后显示 */
+  .label-plnt { opacity: 0; transition: opacity 0.2s; }
+  .label-plnt.visible { opacity: 0.7; }
+  .label-star, .label-center { opacity: 0.9; }
+}
 @media (max-width: 400px) {
   #info{font-size:9px;padding:2px 8px;max-width:65vw}
   #search{width:65px;font-size:9px;padding:3px 8px}
@@ -530,22 +536,34 @@ function renderForceGraph(nodes, links, options) {
       .on('end', dragEnded2));
 
   node.append('circle')
-    .attr('r', options.nodeRadius || function(d) { return d.val || 5; })
+    .attr('r', function(d) { 
+      if (d.nodeType === 'plnt' && isMobile) return 3;
+      if (d.nodeType === 'star' && isMobile) return 8;
+      return (options.nodeRadius || function(n) { return n.val || 5; })(d); 
+    })
     .attr('fill', function(d) { return d.color || '#888'; })
     .attr('stroke', function(d) { return d.nodeType === 'star' ? '#FFD700' : '#fff'; })
     .attr('stroke-width', function(d) { return d.nodeType === 'star' ? 2 : 1; })
     .attr('opacity', 0.85);
 
   // 节点标签（用 tspan 支持换行，避免乱码）
+  var isMobile = W < 600;
   node.append('text')
     .attr('dy', function(d) { return (options.nodeRadius || function(n){return n.val||5;})(d) + 10; })
     .attr('text-anchor', 'middle')
     .attr('fill', '#ddd').attr('font-size', '9px')
     .attr('pointer-events', 'none')
+    .attr('class', function(d) {
+      if (d.nodeType === 'center') return 'label-center';
+      if (d.nodeType === 'star') return 'label-star';
+      if (d.nodeType === 'focus') return 'label-focus';
+      if (d.nodeType === 'plnt') return 'label-plnt';
+      return 'label-plnt';
+    })
     .each(function(d) {
       var t = d3.select(this);
       var label = (options.label || function(n) { return n.name; })(d);
-      var parts = String(label).split('\n');
+      var parts = String(label).split('\\n');
       parts.forEach(function(ln, i) {
         t.append('tspan')
           .attr('x', 0)
@@ -555,16 +573,25 @@ function renderForceGraph(nodes, links, options) {
     });
 
   // 节点点击
-  node.on('click', function(event, n) {
-    event.stopPropagation();
-    if (curLv === 'gal') {
-      solar(n.name);
-    } else if (options.focusable && n.nodeType === 'plnt') {
-      focusMode(n);
-    } else if (options.focusable && n.nodeType === 'star') {
-      // 点击子行业恒星，聚焦该子行业
-      focusMode(n);
-    }
+    node.on('click', function(event, n) {
+      event.stopPropagation();
+      // 移动端：点击行星节点显示标签
+      if (isMobile && n.nodeType === 'plnt') {
+        d3.select(this).select('text').classed('visible', true);
+        // 1秒后自动隐藏
+        var self = this;
+        setTimeout(function() {
+          d3.select(self).select('text').classed('visible', false);
+        }, 1500);
+      }
+      if (curLv === 'gal') {
+        solar(n.name);
+      } else if (options.focusable && n.nodeType === 'plnt') {
+        focusMode(n);
+      } else if (options.focusable && n.nodeType === 'star') {
+        focusMode(n);
+      }
+    });
   });
 
   // 节点悬停
@@ -684,6 +711,11 @@ function focusMode(node) {
   if (!EIX || !EIX[node.id]) {
     loadEdgeIndex(function() {
       if (EIX && EIX[node.id]) doFocusMode(node);
+      else {
+        // 无跨行业关系：展开详情面板
+        if (em[node.id]) showD(node);
+        else showD({ id: node.id, name: node.name || node.id, color: node.color || '#888' });
+      }
     });
     return;
   }
