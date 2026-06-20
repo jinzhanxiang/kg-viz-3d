@@ -155,6 +155,7 @@ var curLv = 'gal', curGal = null, curFocus = null, connectedIds = null;
 var curEdges = []; // 当前视图的关系边（用于聚焦模式）
 var simulation = null;
 var focusTimer = null;
+var labelTimer = null;
 var W = window.innerWidth, H = window.innerHeight;
 
 // ===== SVG 初始化 =====
@@ -496,19 +497,19 @@ function renderForceGraph(nodes, links, options) {
     .force('charge', d3.forceManyBody().strength(function(d) {
       if (d.nodeType === 'center' || d.nodeType === 'focus') return -800;
       if (d.nodeType === 'star') return -500;
-      if (d.nodeType === 'plnt') return -350;
-      return -300;
+      if (d.nodeType === 'plnt') return isMobile ? -500 : -350;
+      return isMobile ? -500 : -300;
     }).distanceMax(800))
     .force('center', options.focusNode
       ? d3.forceCenter(W/2, H/2).strength(0.05)
       : d3.forceCenter(W/2, H/2).strength(0.1))
     .force('collide', d3.forceCollide().radius(function(d) {
-      var r = (d.val || 6) + 12;
-      if (d.nodeType === 'center') return 40;
-      if (d.nodeType === 'focus') return 50;
-      if (d.nodeType === 'star') return 30;
+      var r = (d.val || 6) + 20;
+      if (d.nodeType === 'center') return 50;
+      if (d.nodeType === 'focus') return 60;
+      if (d.nodeType === 'star') return 40;
       return r;
-    }).iterations(3));
+    }).iterations(5));
 
   // 如果是聚焦模式，中心节点固定
   if (options.focusNode) {
@@ -563,7 +564,7 @@ function renderForceGraph(nodes, links, options) {
     .each(function(d) {
       var t = d3.select(this);
       var label = (options.label || function(n) { return n.name; })(d);
-      var parts = String(label).split('\\n');
+      var parts = String(label).split('\n');
       parts.forEach(function(ln, i) {
         t.append('tspan')
           .attr('x', 0)
@@ -577,11 +578,17 @@ function renderForceGraph(nodes, links, options) {
     event.stopPropagation();
     // 移动端：点击行星节点显示标签
     if (isMobile && n.nodeType === 'plnt') {
+      // 先清除之前的定时器
+      if (labelTimer) { clearTimeout(labelTimer); labelTimer = null; }
+      // 先隐藏所有行星标签
+      d3.selectAll('.label-plnt').classed('visible', false);
+      // 显示当前节点的标签
       d3.select(this).select('text').classed('visible', true);
-      // 1秒后自动隐藏
+      // 1.5秒后自动隐藏
       var self = this;
-      setTimeout(function() {
+      labelTimer = setTimeout(function() {
         d3.select(self).select('text').classed('visible', false);
+        labelTimer = null;
       }, 1500);
     }
     if (curLv === 'gal') {
@@ -797,6 +804,12 @@ function doFocusMode(node) {
     });
   }
 
+  // 如果所有来源都找不到关系，显示详情面板替代
+  if (rels.length === 0) {
+    showD(node);
+    return;
+  }
+
   connectedIds = ids;
 
   // 构建节点数据
@@ -914,6 +927,8 @@ function exitFocus() {
   curFocus = null;
   connectedIds = null;
   if (focusTimer) { clearTimeout(focusTimer); focusTimer = null; }
+  if (labelTimer) { clearTimeout(labelTimer); labelTimer = null; }
+  d3.selectAll('.label-plnt').classed('visible', false);
   document.getElementById('focusBadge').classList.remove('active');
   document.getElementById('focus-hint').style.display = 'none';
   document.getElementById('highlight-panel').style.display = 'none';
