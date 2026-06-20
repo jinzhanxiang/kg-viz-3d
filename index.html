@@ -1032,13 +1032,13 @@ function loadEdgeIndex(callback) {
   if (EIX) { callback(); return; }
   d3.json('data/edge-index.json').then(function(data) {
     EIX = data;
-    // 构建实体映射
+    // 构建实体映射（对不在当前视图的实体，标记名称未知）
     Object.keys(EIX).forEach(function(key) {
       EIX[key].forEach(function(link) {
         var src = typeof link.source === 'object' ? link.source.id : link.source;
         var tgt = typeof link.target === 'object' ? link.target.id : link.target;
-        if (!em[src]) em[src] = { id: src, name: src };
-        if (!em[tgt]) em[tgt] = { id: tgt, name: tgt };
+        if (!em[src]) em[src] = { id: src, name: src.replace(/^ent_[a-f0-9]+$/, '未知实体'), color: '#888' };
+        if (!em[tgt]) em[tgt] = { id: tgt, name: tgt.replace(/^ent_[a-f0-9]+$/, '未知实体'), color: '#888' };
       });
     });
     callback();
