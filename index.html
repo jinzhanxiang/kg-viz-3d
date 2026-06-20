@@ -91,7 +91,7 @@ waitForCDNs(function() {
 
 // ===== 数据 =====
 var GLR=[{"name": "新能源电池行业", "count": 1961, "color": "#FF6B6B"}, {"name": "电力设备", "count": 1860, "color": "#FFB347"}, {"name": "医药", "count": 271, "color": "#FFD700"}, {"name": "半导体", "count": 246, "color": "#48C9B0"}, {"name": "低空经济", "count": 202, "color": "#4A90D9"}, {"name": "电力", "count": 165, "color": "#50C878"}, {"name": "机械设备", "count": 144, "color": "#9B59B6"}, {"name": "人工智能", "count": 123, "color": "#E91E63"}, {"name": "汽车零部件", "count": 118, "color": "#00BCD4"}, {"name": "有色金属", "count": 104, "color": "#8BC34A"}, {"name": "军工", "count": 87, "color": "#CDDC39"}, {"name": "科技-主题研究", "count": 60, "color": "#FF9800"}, {"name": "金融", "count": 51, "color": "#795548"}, {"name": "光伏设备", "count": 47, "color": "#607D8B"}, {"name": "证券", "count": 42, "color": "#E74C3C"}, {"name": "机械", "count": 30, "color": "#F39C12"}, {"name": "金融-主题研究", "count": 30, "color": "#1ABC9C"}, {"name": "金融-跨领域研究", "count": 29, "color": "#3498DB"}, {"name": "消费", "count": 17, "color": "#2ECC71"}, {"name": "地产", "count": 13, "color": "#9B59B6"}, {"name": "未分类", "count": 6, "color": "#34495E"}, {"name": "金融-宏观分析", "count": 6, "color": "#16A085"}, {"name": "宏观分析", "count": 5, "color": "#D35400"}], ENT=null, EDG=null, EIX=null, em={};
-var g=null, curLv='gal', curGal=null, autoRot=true, highlightArrows=[];
+var g=null, curLv='gal', curGal=null, autoRot=true, highlightArrows=[], sceneRef=null;
 
 // ===== 过渡动画 =====
 function transitionTo(callback, duration) {
@@ -278,7 +278,11 @@ function render3d(nodes, edges, opt) {
     var linkOpacity = opt.linkOpacity !== undefined ? opt.linkOpacity : 0.15;
     var linkWidth = opt.linkWidth !== undefined ? opt.linkWidth : function() { return 2; };
     
+    // 保存 scene 引用
     g = ForceGraph3D()(document.body)
+      .onBackground(function(scene, camera) {
+        if (scene) sceneRef = scene;
+      })
       .graphData({ nodes: nodes, links: edges })
       .nodeId('id')
       .nodeColor(function(n) { return n.color || '#888'; })
@@ -395,14 +399,10 @@ function focusAndHighlight(node) {
   
   // 4. 创建动态箭头动画（从中心节点指向关联节点）
   setTimeout(function() {
-    if (!g) return;
-    // 使用 onBackground 钩子访问 Three.js scene
-    var sceneAdded = false;
-    g.onBackground(function(scene, camera) {
-      if (sceneAdded || !scene) return;
-      sceneAdded = true;
-      
-      relatedNodes.forEach(function(rn, idx) {
+    if (!g || !sceneRef) return;
+    var scene = sceneRef;
+    
+    relatedNodes.forEach(function(rn, idx) {
         // 创建箭头几何体
         var start = new THREE.Vector3(node.x, node.y, node.z);
         var end = new THREE.Vector3(rn.x, rn.y, rn.z);
