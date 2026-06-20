@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=5.0,minimum-scale=0.25">
 <title>🌌 知识图谱星系</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -54,6 +54,37 @@ body{font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;backgr
 #highlight-panel .hp-exit-btn{display:block;width:100%;margin-top:6px;padding:4px 0;background:rgba(74,144,217,0.15);border:1px solid rgba(74,144,217,0.3);border-radius:6px;color:#4A90D9;font-size:10px;cursor:pointer;text-align:center}
 #highlight-panel .hp-exit-btn:hover{background:rgba(74,144,217,0.25)}
 .zoom-info{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);font-size:9px;color:#555;z-index:100}
+
+/* === 移动端适配 === */
+@media (max-width: 600px) {
+  #info{font-size:10px;padding:3px 10px;white-space:normal;max-width:70vw;left:10px;transform:none}
+  #search{top:12px;right:10px;width:80px;font-size:10px}
+  #search:focus{width:110px}
+  #legend{font-size:8px;padding:4px 8px;bottom:10px;left:10px}
+  #stats{font-size:8px;padding:3px 8px;bottom:10px;right:10px}
+  #stats strong{font-size:9px}
+  #tooltip{font-size:9px;max-width:200px;padding:5px 8px}
+  #tooltip .tt-name{font-size:11px}
+  #node-detail{max-width:90vw;padding:10px;width:92%}
+  #node-detail h2{font-size:13px}
+  #loading .spinner{width:24px;height:24px}
+  #loading{font-size:12px}
+  .legend-dot{width:6px;height:6px}
+  .legend-line{width:10px}
+  #focus-hint{font-size:9px;padding:3px 10px}
+  #highlight-panel{top:44px;right:6px;min-width:160px;padding:8px 10px;max-height:50vh}
+  #highlight-panel h3{font-size:11px}
+  #highlight-panel .hp-count{font-size:9px}
+  #highlight-panel .hp-item{font-size:10px}
+}
+@media (max-width: 400px) {
+  #info{font-size:9px;padding:2px 8px;max-width:65vw}
+  #search{width:65px;font-size:9px;padding:3px 8px}
+  #search:focus{width:90px}
+  #legend{font-size:7px;padding:3px 6px}
+  #stats{font-size:7px;padding:2px 6px}
+  #stats strong{font-size:8px}
+}
 </style>
 </head>
 <body>
@@ -240,6 +271,9 @@ function renderGalaxy() {
 
   updateStats(nodes.length, links.length);
   document.getElementById('loading').style.display = 'none';
+
+  // 自动缩放适配
+  setTimeout(function() { fitView(g, nodes); }, 100);
 }
 
 function dragStarted(event, d) {
@@ -546,10 +580,9 @@ function renderForceGraph(nodes, links, options) {
     // 模拟运行结束，保持当前状态
   });
 
-  // 自动缩放适配
-  setTimeout(function() {
-    fitView(g, nodes);
-  }, 500);
+  // 自动缩放适配（移动端稍等冷却更充分）
+  var fitDelay = W < 500 ? 1200 : 500;
+  setTimeout(function() { fitView(g, nodes); }, fitDelay);
 }
 
 function dragStarted2(event, d) {
@@ -574,11 +607,14 @@ function dragEnded2(event, d) {
 }
 
 function fitView(g, nodes) {
+  if (!nodes || nodes.length === 0) return;
   var x = d3.extent(nodes, d => d.x), y = d3.extent(nodes, d => d.y);
-  var pad = 50;
+  if (!x[0] || !x[1] || !y[0] || !y[1]) return;
+  var pad = Math.min(W, H) * 0.08;
   var w = Math.max(x[1] - x[0], 100) + pad * 2;
   var h = Math.max(y[1] - y[0], 100) + pad * 2;
-  var scale = Math.min((W - pad * 2) / w, (H - pad * 2) / h, 2);
+  var maxScale = W < 500 ? 3 : 2;
+  var scale = Math.min((W - pad * 2) / w, (H - pad * 2) / h, maxScale);
   var tx = W/2 - scale * (x[0] + x[1]) / 2;
   var ty = H/2 - scale * (y[0] + y[1]) / 2;
   svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
@@ -850,6 +886,11 @@ function backToGalaxy() {
     });
 
   d3.selectAll('.node circle').transition().duration(800).attr('opacity', 0.85);
+
+  // 动画完成后自动缩放适配
+  setTimeout(function() {
+    fitView(d3.select('#g'), nodes);
+  }, 900);
 }
 
 // ===== 数据加载 =====
