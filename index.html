@@ -47,6 +47,7 @@ body{font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;backgr
 <body>
 <div id="loading"><div class="spinner"></div><div>🌌 加载星系...</div><div id="loadInfo" style="font-size:10px;color:#444;margin-top:4px"></div></div>
 <div id="transition-overlay"></div>
+<div id="graph-container" style="position:fixed;inset:0;z-index:1"></div>
 <div id="info">🌌 <strong id="gTitle">知识图谱星系</strong><span class="lvl" id="gLvl">银河系 · 加载中</span></div>
 <input id="search" placeholder="🔍 搜索..." oninput="searchNode(this.value)">
 <div id="legend">
@@ -242,7 +243,7 @@ function solar(galName) {
 
 // ===== 3D渲染引擎 =====
 function render3d(nodes, edges, opt) {
-  if (g) { g._destructor(); g.destroy(); g = null; }
+  if (g) { try { g._destructor(); } catch(e){} g = null; }
   highlightArrows.forEach(function(a) { if(a.parent) a.parent.remove(a); });
   highlightArrows = [];
   document.getElementById('highlight-panel').style.display = 'none';
@@ -251,7 +252,7 @@ function render3d(nodes, edges, opt) {
     var linkOpacity = opt.linkOpacity !== undefined ? opt.linkOpacity : 0.15;
     var linkWidth = opt.linkWidth !== undefined ? opt.linkWidth : function() { return 2; };
     
-    g = ForceGraph3D()(document.body)
+    g = ForceGraph3D()(document.getElementById('graph-container'))
       .graphData({ nodes: nodes, links: edges })
       .nodeId('id')
       .nodeColor(function(n) { return n.color || '#888'; })
@@ -318,7 +319,7 @@ function focusAndHighlight(node) {
   closeD();
   if (!g) return;
   
-  g.centerAt(node.x, node.y, 800);
+  g.cameraPosition({ x: node.x, y: node.y, z: 40 }, { x: node.x, y: node.y, z: 0 }, 800);
   g.zoomToFit(600, 400, function(n) { return n.id === node.id; });
   
   setTimeout(function() {
@@ -335,9 +336,11 @@ function focusAndHighlight(node) {
   var relatedLinks = [];
   
   d.links.forEach(function(l) {
-    if (l.source === node.id || l.target === node.id) {
+    var srcId = typeof l.source === 'object' ? l.source.id : l.source;
+    var tgtId = typeof l.target === 'object' ? l.target.id : l.target;
+    if (srcId === node.id || tgtId === node.id) {
       relatedLinks.push(l);
-      var otherId = l.source === node.id ? l.target : l.source;
+      var otherId = srcId === node.id ? tgtId : srcId;
       var otherNode = d.nodes.find(function(n) { return n.id === otherId; });
       if (otherNode && relatedNodes.indexOf(otherNode) === -1) {
         relatedNodes.push(otherNode);
@@ -349,7 +352,7 @@ function focusAndHighlight(node) {
   var hpContent = document.getElementById('hpContent');
   var html = '';
   relatedNodes.forEach(function(rn) {
-    var arrowDir = relatedLinks.find(function(l) { return l.source === node.id && l.target === rn.id; }) ? '→' : '←';
+    var arrowDir = relatedLinks.find(function(l) { var srcId = typeof l.source === 'object' ? l.source.id : l.source; var tgtId = typeof l.target === 'object' ? l.target.id : l.target; return srcId === node.id && tgtId === rn.id; }) ? '→' : '←';
     html += '<div class="hp-item"><span class="hp-arrow">' + arrowDir + '</span><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:' + rn.color + ';margin-right:4px;vertical-align:middle"></span>' + rn.name + '</div>';
   });
   hpContent.innerHTML = html || '<div style="color:#666;font-size:10px;padding:8px 0;text-align:center">无关联</div>';
@@ -357,7 +360,7 @@ function focusAndHighlight(node) {
   
   setTimeout(function() {
     if (!g) return;
-    var scene = g.scene;
+    var scene = g.scene();
     if (!scene) return;
     
     relatedNodes.forEach(function(rn, idx) {
@@ -479,7 +482,7 @@ function focusE(id) {
     var d = g.graphData();
     var fn = d.nodes.find(function(n) { return n.id === id; });
     if (!fn) return;
-    g.centerAt(fn.x, fn.y, 300);
+    g.cameraPosition({ x: fn.x, y: fn.y, z: 40 }, { x: fn.x, y: fn.y, z: 0 }, 300);
     g.zoomToFit(250, 30, function(n) { return n.id === id; });
   }, 600);
 }
@@ -500,7 +503,7 @@ function searchNode(q) {
       var fd = g.graphData();
       var fn = fd.nodes.find(function(n) { return n.id === m.id; });
       if (fn) {
-        g.centerAt(fn.x, fn.y, 200);
+        g.cameraPosition({ x: fn.x, y: fn.y, z: 40 }, { x: fn.x, y: fn.y, z: 0 }, 200);
         g.zoomToFit(200, 20, function(n) { return n.id === m.id; });
       }
     }
@@ -524,8 +527,22 @@ document.body.addEventListener('mousemove', function(e) {
 window.addEventListener('resize', function() { if (g) { g.width(window.innerWidth); g.height(window.innerHeight); } });
 
 // ===== 初始化 =====
-// CDN 已按顺序加载，直接启动
-boot();
+// 加载数据并启动
+fetch('data.json').then(function(r){ return r.json(); }).then(function(d){
+  ENT = d.entities;
+  EDG = d.edges;
+  EIX = d.entityIndex || {};
+  d.entities.forEach(function(e){ em[e.id] = e; });
+  document.getElementById('sN').textContent = ENT.length;
+  document.getElementById('sE').textContent = EDG.length;
+  document.getElementById('sG').textContent = GLR.length;
+  document.getElementById('loadInfo').textContent = ENT.length + '实体 ' + EDG.length + '关系';
+  boot();
+  setTimeout(function(){ document.getElementById('loading').style.display = 'none'; }, 500);
+}).catch(function(e){
+  console.error('数据加载失败:', e);
+  document.getElementById('loadInfo').textContent = '⛔ 数据加载失败';
+});
 </script>
 </body>
 </html>
