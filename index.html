@@ -230,14 +230,14 @@ function solar(galName) {
         
         ge.forEach(function(e, i) {
           var ea = starAngle + (i / ge.length) * Math.PI * 2;
-          var baseEd = Math.max(12, Math.min(60, 10 + Math.log10(ge.length) * 20));
-          var ed = baseEd * (0.6 + Math.random() * 0.8);
+          var baseEd = Math.max(12, Math.min(40, 8 + Math.log10(ge.length) * 15));
+          var ed = baseEd * (0.7 + Math.random() * 0.6);
           nodes.push({
             id: e.id, name: e.name, nodeType: 'plnt', typeLabel: e.typeLabel,
-            desc: e.desc, color: e.color, val: e.core ? 0.15 : 0.08,
+            desc: e.desc, color: e.color, val: e.core ? 0.5 : 0.3,
             x: Math.cos(ea) * ed + Math.cos(starAngle) * starDist,
             y: Math.sin(ea) * ed + Math.sin(starAngle) * starDist,
-            z: (Math.random() - 0.5) * 8,
+            z: 0,
             star: sid
           });
           nid[e.id] = true;
@@ -253,26 +253,20 @@ function solar(galName) {
       }).filter(function(e) { return e !== null; });
       
       render3d(nodes, el, {
-        obj: function(n) {
-          if (n.nodeType === 'star') return makeGlowNode(n.color, Math.sqrt(n.val), n.name + '(' + n.count + ')', '#FFD700');
-          return null;
-        },
+        obj: null,
         focusable: true,
         label: function(n) { return n.name + (n.typeLabel ? '\n' + n.typeLabel : ''); },
-        phys: false,
+        phys: true,
         linkColor: function(l) {
-          // Brighten dark links for visibility on dark background
           var c = l.color || '#888';
           if (c === '#555555' || c === '#555' || c === '#444') return '#AAAAAA';
           return c;
         },
         linkOpacity: 0.9,
-        linkWidth: function(l) { return 8; },
-        linkDirectionalArrowLength: 6,
-        linkDirectionalArrowRelPos: 0.6,
+        linkWidth: function(l) { return 2; },
         linkDirectionalParticles: 2,
         linkDirectionalParticleSpeed: 0.005,
-        linkDirectionalParticleWidth: 4
+        linkDirectionalParticleWidth: 3
       });
     });
   }, 600);
@@ -326,8 +320,8 @@ function render3d(nodes, edges, opt) {
       .enableNavigationControls(true)
       .showNavInfo(false)
       .warmupTicks(0)
-      .d3AlphaDecay(0.98)
-      .d3VelocityDecay(0.9)
+      .d3AlphaDecay(opt.phys === false ? 0.98 : 0.98)
+      .d3VelocityDecay(opt.phys === false ? 0.9 : 0.9)
       .nodeVisibility(function(n) {
         if (!curFocus || !connectedIds) return true;
         return connectedIds.has(n.id);
@@ -339,20 +333,38 @@ function render3d(nodes, edges, opt) {
         return srcId === curFocus || tgtId === curFocus;
       });
     
-    // Pin positions immediately—disable all forces
-    g.d3Force('center', null);
-    g.d3Force('charge', null);
-    g.d3Force('link', null);
-    var gd = g.graphData();
-    gd.nodes.forEach(function(nn) {
-      var src = nodes.find(function(x) { return x.id === nn.id; });
-      if (src) { nn.fx = src.x; nn.fy = src.y; nn.fz = src.z; }
-    });
+    // ===== 物理引擎设置 =====
+    if (opt.phys === false) {
+      // 银河系视图：禁用力模拟，固定位置
+      g.d3Force('center', null);
+      g.d3Force('charge', null);
+      g.d3Force('link', null);
+      var gd = g.graphData();
+      gd.nodes.forEach(function(nn) {
+        var src = nodes.find(function(x) { return x.id === nn.id; });
+        if (src) { nn.fx = src.x; nn.fy = src.y; nn.fz = src.z; }
+      });
+    } else {
+      // 太阳系视图：2D平面环形布局(禁用力模拟防止飞散)
+      g.d3Force('center', null);
+      g.d3Force('charge', null);
+      g.d3Force('link', null);
+      var gd = g.graphData();
+      gd.nodes.forEach(function(nn) {
+        var src = nodes.find(function(x) { return x.id === nn.id; });
+        if (src) { nn.fx = src.x; nn.fy = src.y; nn.fz = 0; }
+      });
+    }
     
     setTimeout(function() {
-      g.controls().autoRotate = true;
-      g.controls().autoRotateSpeed = 0.4;
-      fitCamera();
+      if (opt.phys === false) {
+        g.controls().autoRotate = true;
+        g.controls().autoRotateSpeed = 0.4;
+      } else {
+        g.controls().autoRotate = false;
+        // 2D太阳系：相机从上方俯视
+        fitCamera();
+      }
     }, 200);
     
     // Force depthWrite=true on all link cylinders to prevent occlusion
