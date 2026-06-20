@@ -573,25 +573,24 @@ function renderForceGraph(nodes, links, options) {
     });
 
   // 节点点击
-    node.on('click', function(event, n) {
-      event.stopPropagation();
-      // 移动端：点击行星节点显示标签
-      if (isMobile && n.nodeType === 'plnt') {
-        d3.select(this).select('text').classed('visible', true);
-        // 1秒后自动隐藏
-        var self = this;
-        setTimeout(function() {
-          d3.select(self).select('text').classed('visible', false);
-        }, 1500);
-      }
-      if (curLv === 'gal') {
-        solar(n.name);
-      } else if (options.focusable && n.nodeType === 'plnt') {
-        focusMode(n);
-      } else if (options.focusable && n.nodeType === 'star') {
-        focusMode(n);
-      }
-    });
+  node.on('click', function(event, n) {
+    event.stopPropagation();
+    // 移动端：点击行星节点显示标签
+    if (isMobile && n.nodeType === 'plnt') {
+      d3.select(this).select('text').classed('visible', true);
+      // 1秒后自动隐藏
+      var self = this;
+      setTimeout(function() {
+        d3.select(self).select('text').classed('visible', false);
+      }, 1500);
+    }
+    if (curLv === 'gal') {
+      solar(n.name);
+    } else if (options.focusable && n.nodeType === 'plnt') {
+      focusMode(n);
+    } else if (options.focusable && n.nodeType === 'star') {
+      focusMode(n);
+    }
   });
 
   // 节点悬停
