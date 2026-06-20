@@ -119,7 +119,7 @@ function mkLabel(text, color, size, bg) {
   t.minFilter = THREE.LinearFilter;
   var m = new THREE.SpriteMaterial({map: t, transparent: true, depthTest: false, sizeAttenuation: true});
   var s = new THREE.Sprite(m);
-  s.scale.set(Math.max(5, tw / 20), 2.5, 1);
+  s.scale.set(Math.max(7, tw / 15), 3, 1);
   return s;
 }
 
@@ -135,7 +135,7 @@ function makeSphereNode(color, radius, emissive) {
 function makeGlowNode(color, radius, label, labelColor) {
   var grp = makeSphereNode(color, radius);
   var l = mkLabel(label, labelColor || '#fff', Math.min(36, Math.max(20, radius * 2.2)));
-  l.position.y = radius + 1.5;
+  l.position.y = radius + 2;
   grp.add(l);
   return grp;
 }
@@ -198,25 +198,29 @@ function solar(galName) {
       var ge = grp[gk];
       var isSub = gk !== galName;
       var sid = 's_' + k;
-      var sa = angleOff + (k / 20) * Math.PI * 2;
-      var sr = isSub ? calcNodeSize(ge.length, 3, 6) : calcNodeSize(ge.length, 5, 10);
+      var starAngle = angleOff + (k / Object.keys(grp).length) * Math.PI * 2;
+      var starDist = isSub ? 18 : 0;
+      var sr = isSub ? calcNodeSize(ge.length, 5, 10) : calcNodeSize(ge.length, 7, 14);
       
       nodes.push({
         id: sid, name: gk, nodeType: 'star', count: ge.length,
         color: isSub ? '#FFD700' : '#4A90D9', val: sr * sr,
-        x: 0, y: 0, z: 0,
+        x: Math.cos(starAngle) * starDist, y: Math.sin(starAngle) * starDist, z: 0,
         desc: (isSub ? '细分: ' : '') + gk + '·' + ge.length + '家'
       });
       nid[sid] = true;
       
       ge.forEach(function(e, i) {
-        var ea = sa + (i / ge.length) * Math.PI * 2;
-        var ed = Math.max(6, Math.min(16, 3 + ge.length / 8));
-        var pVal = e.core ? calcNodeSize(1, 3.5, 5) : calcNodeSize(1, 2, 3.5);
+        var ea = starAngle + (i / ge.length) * Math.PI * 2;
+        var baseEd = Math.max(12, Math.min(35, 8 + ge.length / 6));
+        var ed = baseEd * (0.6 + Math.random() * 0.8);
+        var pVal = e.core ? calcNodeSize(1, 4.5, 7) : calcNodeSize(1, 3, 5);
         nodes.push({
           id: e.id, name: e.name, nodeType: 'plnt', typeLabel: e.typeLabel,
           desc: e.desc, color: e.color, val: pVal * pVal,
-          x: Math.cos(ea) * ed, y: Math.sin(ea) * ed, z: (Math.random() - 0.5) * 3.5,
+          x: Math.cos(ea) * ed + Math.cos(starAngle) * starDist,
+          y: Math.sin(ea) * ed + Math.sin(starAngle) * starDist,
+          z: (Math.random() - 0.5) * 8,
           star: sid
         });
         nid[e.id] = true;
@@ -233,10 +237,10 @@ function solar(galName) {
         return null;
       },
       label: function(n) { return n.name + (n.typeLabel ? '\n' + n.typeLabel : ''); },
-      cam: { x: -40, y: 0, z: 90 },
+      cam: { x: -30, y: 0, z: 60 },
       phys: false,
-      linkOpacity: 0.25,
-      linkWidth: function(l) { return l.type === '关联' ? 2 : 3; }
+      linkOpacity: 0.4,
+      linkWidth: function(l) { return l.type === '关联' ? 2.5 : 4; }
     });
   }, 600);
 }
@@ -270,17 +274,19 @@ function render3d(nodes, edges, opt) {
       .enableNodeDrag(false)
       .enableNavigationControls(true)
       .showNavInfo(false)
-      .d3AlphaDecay(0.5)
-      .d3VelocityDecay(0.8);
+      .warmupTicks(0)
+      .d3AlphaDecay(0.98)
+      .d3VelocityDecay(0.9);
     
-    nodes.forEach(function(n) { g.d3Force('center', null); });
-    setTimeout(function() {
-      var d = g.graphData();
-      d.nodes.forEach(function(nn) {
-        var src = nodes.find(function(x) { return x.id === nn.id; });
-        if (src) { nn.fx = src.x; nn.fy = src.y; nn.fz = src.z; }
-      });
-    }, 100);
+    // Pin positions immediately—disable all forces
+    g.d3Force('center', null);
+    g.d3Force('charge', null);
+    g.d3Force('link', null);
+    var gd = g.graphData();
+    gd.nodes.forEach(function(nn) {
+      var src = nodes.find(function(x) { return x.id === nn.id; });
+      if (src) { nn.fx = src.x; nn.fy = src.y; nn.fz = src.z; }
+    });
     
     setTimeout(function() {
       g.controls().autoRotate = true;
