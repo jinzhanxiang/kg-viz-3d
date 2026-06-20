@@ -216,7 +216,7 @@ function renderGalaxy() {
     .attr('dy', function(d) { return d.val + 12; })
     .attr('text-anchor', 'middle')
     .attr('fill', '#ddd').attr('font-size', '10px')
-    .text(function(d) { return d.name + '\n(' + d.count + '家)'); });
+    .text(function(d) { return d.name + '\n' + '(' + d.count + '家)'; });
 
   node.on('click', function(event, d) {
     solar(d.name);
