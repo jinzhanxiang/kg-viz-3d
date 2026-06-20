@@ -258,8 +258,8 @@ function solar(galName) {
       label: function(n) { return n.name + (n.typeLabel ? '\n' + n.typeLabel : ''); },
       cam: { x: -30, y: 0, z: 60 },
       phys: false,
-      linkOpacity: 0.5,
-      linkWidth: function(l) { return l.type === '关联' ? 3 : 5; }
+      linkOpacity: 0.8,
+      linkWidth: function(l) { return l.type === '关联' ? 3 : 6; }
     });
   }, 600);
 }
@@ -419,7 +419,7 @@ function focusMode(node) {
   rels.forEach(function(r) {
     var rn = d.nodes.find(function(n) { return n.id === r.otherId; });
     if (!rn) return;
-    html += '<div class="hp-item" onclick="var id=' + JSON.stringify(rn.id) + ';exitFocus();setTimeout(function(){focusE(id)},100)">' +
+    html += '<div class="hp-item" onclick="focusHP(' + "'" + rn.id + "'" + ')">' +
       '<span class="hp-arrow">' + r.arrow + '</span>' +
       '<span class="hp-dot" style="background:' + rn.color + '"></span>' +
       '<span class="hp-rel-type">' + r.type + '</span>' +
@@ -487,6 +487,8 @@ function focusE(id) {
 
 function goBack() { closeD(); exitFocus(); if (curLv === 'sol') boot(); }
 function toggleRot() { autoRot = !autoRot; if (g && g.controls) g.controls().autoRotate = autoRot; }
+// Helper: highlight panel item click -> focus another node
+function focusHP(id) { exitFocus(); setTimeout(function(){focusE(id)},150); }
 
 function searchNode(q) {
   if (!q || q.length < 1) return;
