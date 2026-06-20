@@ -169,8 +169,8 @@ function calcNodeSize(count, minSize, maxSize) {
 }
 
 // ===== 银河系 =====
-function boot() {
-  curLv = 'gal'; curGal = null;
+function boot(glrData) {
+  curLv = 'gal'; curGal = null; GLR = glrData;
   document.getElementById('gTitle').textContent = '知识图谱星系';
   document.getElementById('gLvl').textContent = '银河系 · ' + GLR.length + '个';
   var nodes = GLR.map(function(gal, i) {
@@ -195,71 +195,72 @@ function boot() {
 
 // ===== 太阳系 =====
 function solar(galName) {
-  if (!ENT) { document.getElementById('gLvl').textContent = '⏳ 数据加载中...'; return; }
-  
   transitionTo(function() {
     curLv = 'sol'; curGal = galName;
     document.getElementById('gTitle').textContent = galName;
     document.getElementById('gLvl').textContent = '☉ 太阳系';
     
-    var ents = ENT.filter(function(e) { return e.sector === galName; });
-    var grp = {};
-    ents.forEach(function(e) {
-      var k = e.subIndustry || e.sector;
-      if (!grp[k]) grp[k] = [];
-      grp[k].push(e);
-    });
-    
-    var nodes = [], nid = {};
-    var angleOff = Math.random() * Math.PI * 2;
-    
-    Object.keys(grp).sort(function(a, b) { return grp[b].length - grp[a].length; }).forEach(function(gk, k) {
-      var ge = grp[gk];
-      var isSub = gk !== galName;
-      var sid = 's_' + k;
-      var starAngle = angleOff + (k / Object.keys(grp).length) * Math.PI * 2;
-      var starDist = isSub ? 18 : 0;
-      var sr = isSub ? calcNodeSize(ge.length, 5, 10) : calcNodeSize(ge.length, 7, 14);
-      
-      nodes.push({
-        id: sid, name: gk, nodeType: 'star', count: ge.length,
-        color: isSub ? '#FFD700' : '#4A90D9', val: sr * 0.5,
-        x: Math.cos(starAngle) * starDist, y: Math.sin(starAngle) * starDist, z: 0,
-        desc: (isSub ? '细分: ' : '') + gk + '·' + ge.length + '家'
+    loadSectorData(galName, function(data) {
+      var ents = data.entities;
+      var edges = data.edges;
+      var grp = {};
+      ents.forEach(function(e) {
+        var k = e.subIndustry || e.sector;
+        if (!grp[k]) grp[k] = [];
+        grp[k].push(e);
       });
-      nid[sid] = true;
       
-      ge.forEach(function(e, i) {
-        var ea = starAngle + (i / ge.length) * Math.PI * 2;
-        var baseEd = Math.max(12, Math.min(60, 10 + Math.log10(ge.length) * 20));
-        var ed = baseEd * (0.6 + Math.random() * 0.8);
+      var nodes = [], nid = {};
+      var angleOff = Math.random() * Math.PI * 2;
+      
+      Object.keys(grp).sort(function(a, b) { return grp[b].length - grp[a].length; }).forEach(function(gk, k) {
+        var ge = grp[gk];
+        var isSub = gk !== galName;
+        var sid = 's_' + k;
+        var starAngle = angleOff + (k / Object.keys(grp).length) * Math.PI * 2;
+        var starDist = isSub ? 18 : 0;
+        var sr = isSub ? calcNodeSize(ge.length, 5, 10) : calcNodeSize(ge.length, 7, 14);
+        
         nodes.push({
-          id: e.id, name: e.name, nodeType: 'plnt', typeLabel: e.typeLabel,
-          desc: e.desc, color: e.color, val: e.core ? 0.15 : 0.08,
-          x: Math.cos(ea) * ed + Math.cos(starAngle) * starDist,
-          y: Math.sin(ea) * ed + Math.sin(starAngle) * starDist,
-          z: (Math.random() - 0.5) * 8,
-          star: sid
+          id: sid, name: gk, nodeType: 'star', count: ge.length,
+          color: isSub ? '#FFD700' : '#4A90D9', val: sr * 0.5,
+          x: Math.cos(starAngle) * starDist, y: Math.sin(starAngle) * starDist, z: 0,
+          desc: (isSub ? '细分: ' : '') + gk + '·' + ge.length + '家'
         });
-        nid[e.id] = true;
+        nid[sid] = true;
+        
+        ge.forEach(function(e, i) {
+          var ea = starAngle + (i / ge.length) * Math.PI * 2;
+          var baseEd = Math.max(12, Math.min(60, 10 + Math.log10(ge.length) * 20));
+          var ed = baseEd * (0.6 + Math.random() * 0.8);
+          nodes.push({
+            id: e.id, name: e.name, nodeType: 'plnt', typeLabel: e.typeLabel,
+            desc: e.desc, color: e.color, val: e.core ? 0.15 : 0.08,
+            x: Math.cos(ea) * ed + Math.cos(starAngle) * starDist,
+            y: Math.sin(ea) * ed + Math.sin(starAngle) * starDist,
+            z: (Math.random() - 0.5) * 8,
+            star: sid
+          });
+          nid[e.id] = true;
+        });
       });
-    });
-    
-    var el = EDG.filter(function(e) { return nid[e.source] && nid[e.target]; }).map(function(e) {
-      return { source: e.source, target: e.target, type: e.type, color: e.color };
-    });
-    
-    render3d(nodes, el, {
-      obj: function(n) {
-        if (n.nodeType === 'star') return makeGlowNode(n.color, Math.sqrt(n.val), n.name + '(' + n.count + ')', '#FFD700');
-        return null;
-      },
-      focusable: true,
-      label: function(n) { return n.name + (n.typeLabel ? '\n' + n.typeLabel : ''); },
-      cam: { x: -30, y: 0, z: 60 },
-      phys: false,
-      linkOpacity: 0.8,
-      linkWidth: function(l) { return l.type === '关联' ? 3 : 6; }
+      
+      var el = edges.filter(function(e) { return nid[e.source] && nid[e.target]; }).map(function(e) {
+        return { source: e.source, target: e.target, type: e.type, color: e.color };
+      });
+      
+      render3d(nodes, el, {
+        obj: function(n) {
+          if (n.nodeType === 'star') return makeGlowNode(n.color, Math.sqrt(n.val), n.name + '(' + n.count + ')', '#FFD700');
+          return null;
+        },
+        focusable: true,
+        label: function(n) { return n.name + (n.typeLabel ? '\n' + n.typeLabel : ''); },
+        cam: { x: -30, y: 0, z: 60 },
+        phys: false,
+        linkOpacity: 0.8,
+        linkWidth: function(l) { return l.type === '关联' ? 3 : 6; }
+      });
     });
   }, 600);
 }
@@ -379,12 +380,29 @@ function focusMode(node) {
   if (!g) return;
   closeD();
   
-  // Compute connected nodes
+  // 加载 edgeIndex（如果还没加载）
+  if (!EIX || !EIX[node.id]) {
+    loadEdgeIndex(function() {
+      if (EIX && EIX[node.id]) {
+        doFocusMode(node);
+      } else {
+        console.log('No edgeIndex for node:', node.id);
+      }
+    });
+    return;
+  }
+  doFocusMode(node);
+}
+
+function doFocusMode(node) {
   var d = g.graphData();
   var ids = new Set();
   ids.add(node.id);
   var rels = [];
-  d.links.forEach(function(l) {
+  
+  // Use edgeIndex for fast lookup
+  var nodeEdges = EIX[node.id] || [];
+  nodeEdges.forEach(function(l) {
     var srcId = typeof l.source === 'object' ? l.source.id : l.source;
     var tgtId = typeof l.target === 'object' ? l.target.id : l.target;
     if (srcId === node.id || tgtId === node.id) {
@@ -397,11 +415,9 @@ function focusMode(node) {
   curFocus = node.id;
   connectedIds = ids;
   
-  // Show focus badge
   document.getElementById('focusBadge').classList.add('active');
   document.getElementById('focus-hint').style.display = 'block';
   
-  // Camera zoom to focused node
   g.controls().autoRotate = false;
   g.cameraPosition(
     { x: node.x + 5, y: node.y + 3, z: node.z + 8 },
@@ -409,10 +425,8 @@ function focusMode(node) {
     600
   );
   
-  // Trigger visibility re-eval
   g.d3ReheatSimulation();
   
-  // Show highlight panel
   var hp = document.getElementById('highlight-panel');
   var hpContent = document.getElementById('hpContent');
   var html = '<div class="hp-count">⚡ ' + rels.length + ' 条关联 · ' + (ids.size - 1) + ' 个节点</div>';
@@ -428,17 +442,7 @@ function focusMode(node) {
   hpContent.innerHTML = html || '<div style="color:#666;font-size:10px;padding:8px 0;text-align:center">无关联</div>';
   hp.style.display = 'block';
   
-  // Pulse animation on focused node
-  var pulse = true;
-  function doPulse() {
-    if (!pulse || !g) return;
-    if (focusTimer) { cancelAnimationFrame(focusTimer); }
-    g._rerender && g._rerender();
-    focusTimer = requestAnimationFrame(function() {
-      setTimeout(doPulse, 1200);
-    });
-  }
-  // Simple periodic rerender to keep visibility evaluation fresh
+  // Periodic re-render to keep visibility fresh
   focusTimer = setTimeout(function pulseRefresh() {
     if (curFocus && g) {
       g.d3ReheatSimulation();
@@ -450,8 +454,15 @@ function focusMode(node) {
 // ===== 详情 =====
 function showD(n) {
   if (!EIX || !EIX[n.id]) {
-    document.getElementById('dContent').innerHTML = '<div style="color:#888;text-align:center;padding:10px">⏳ 数据加载中...</div>';
-    document.getElementById('node-detail').style.display = 'block';
+    // Try loading edgeIndex
+    loadEdgeIndex(function() {
+      if (EIX && EIX[n.id]) {
+        showD(n);
+      } else {
+        document.getElementById('dContent').innerHTML = '<div style="color:#888;text-align:center;padding:10px">无关联数据</div>';
+        document.getElementById('node-detail').style.display = 'block';
+      }
+    });
     return;
   }
   var e = em[n.id];
@@ -463,7 +474,11 @@ function showD(n) {
     rs.forEach(function(l) {
       var o = em[l.source === n.id ? l.target : l.source];
       if (!o) return;
-      html += '<div class="nd-rel-item" onclick="closeD();focusE(\'' + o.id + '\')"><span style="color:#888;font-size:8px">' + (l.source === n.id ? '→' : '←') + '</span><span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:' + l.color + ';flex-shrink:0"></span><span style="font-size:8px;color:#999">' + l.type + '</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis">' + o.name + '</span></div>';
+      html += '<div class="nd-rel-item" onclick="closeD();focusE(' + "'" + o.id + "'" + ')">' +
+        '<span style="color:#888;font-size:8px">' + (l.source === n.id ? '→' : '←') + '</span>' +
+        '<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:' + l.color + ';flex-shrink:0"></span>' +
+        '<span style="font-size:8px;color:#999">' + l.type + '</span>' +
+        '<span style="flex:1;overflow:hidden;text-overflow:ellipsis">' + o.name + '</span></div>';
     });
   }
   document.getElementById('dContent').innerHTML = html;
@@ -485,7 +500,7 @@ function focusE(id) {
   }, 600);
 }
 
-function goBack() { closeD(); exitFocus(); if (curLv === 'sol') boot(); }
+function goBack() { closeD(); exitFocus(); if (curLv === 'sol') { curSectorData = null; boot(GLR); } }
 function toggleRot() { autoRot = !autoRot; if (g && g.controls) g.controls().autoRotate = autoRot; }
 // Helper: highlight panel item click -> focus another node
 function focusHP(id) { exitFocus(); setTimeout(function(){focusE(id)},150); }
@@ -527,85 +542,91 @@ document.body.addEventListener('mousemove', function(e) {
 window.addEventListener('resize', function() { if (g) { g.width(window.innerWidth); g.height(window.innerHeight); } });
 
 // ===== 初始化 =====
-// 加载数据并启动（优先使用gzip压缩版 5.6MB→0.9MB）
+// 按需加载（Lazy Loading）- 首次只加载银河系索引，进入太阳系才加载行业数据
 var loadStartTime = Date.now();
+var ENT = null, EDG = null, EIX = null, em = {};
+var edgeIndexLoaded = false;
+var curSectorData = null; // 当前太阳系缓存
 
-document.getElementById('loadInfo').textContent = '⏳ 加载基础库...';
-setTimeout(function() {
-  if (!ENT) {
-    document.getElementById('loadInfo').textContent = '📥 正在下载数据...';
-    document.getElementById('gLvl').textContent = '银河系 · 下载中';
-  }
-}, 1000);
-setTimeout(function() {
-  if (!ENT) {
-    document.getElementById('loadInfo').textContent = '📥 下载中(压缩版~0.9MB)，请稍候...';
-  }
-}, 5000);
-setTimeout(function() {
-  if (!ENT) {
-    document.getElementById('loadInfo').textContent = '📥 仍在下载... 网络较慢请耐心等待';
-  }
-}, 15000);
+document.getElementById('loadInfo').textContent = '⏳ 加载星系索引...';
 
-// 60秒超时保护
+// 30秒超时保护
 var loadTimeout = setTimeout(function() {
-  if (!ENT) {
-    document.getElementById('loadInfo').innerHTML = '⛔ 加载超时(60s)<br>请检查网络或使用WiFi';
+  if (!ENT && !curSectorData) {
+    document.getElementById('loadInfo').innerHTML = '⛔ 加载超时(30s)<br>请检查网络或使用WiFi';
     document.getElementById('retryArea').style.display = 'block';
     document.getElementById('gLvl').textContent = '银河系 · 加载失败';
   }
-}, 60000);
+}, 30000);
 
-// 数据加载函数（支持gzip解压）
-function loadData() {
-  document.getElementById('loadInfo').textContent = '📦 下载数据...';
-
-  // 尝试使用gzip压缩版（原生DecompressionStream，Chrome80+/Firefox80+/Safari16.4+）
-  function tryGzip() {
-    if (typeof DecompressionStream === 'undefined') return Promise.reject(new Error('no native gzip'));
-    return fetch('data.json.gz').then(function(r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.blob();
-    }).then(function(blob) {
-      document.getElementById('loadInfo').textContent = '📦 解压数据中...';
-      var stream = blob.stream().pipeThrough(new DecompressionStream('gzip'));
-      return new Response(stream).json();
-    });
-  }
-
-  function tryPlain() {
-    document.getElementById('loadInfo').textContent = '📥 下载原始数据(5.6MB)...';
-    return fetch('data.json').then(function(r) { return r.json(); });
-  }
-
-  return tryGzip().catch(function(e) {
-    console.log('gzip fallback:', e.message);
-    return tryPlain();
-  }).then(function(d) {
+// 加载银河系索引
+function loadGalaxyIndex() {
+  return fetch('data/data-index.json').then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).then(function(glr) {
     clearTimeout(loadTimeout);
-    ENT = d.entities;
-    EDG = d.edges;
-    EIX = d.entityIndex || {};
-    if (d.entities) d.entities.forEach(function(e){ em[e.id] = e; });
-    document.getElementById('sN').textContent = ENT.length;
-    document.getElementById('sE').textContent = EDG.length;
-    document.getElementById('sG').textContent = GLR.length;
+    boot(glr);
     var elapsed = Math.round((Date.now()-loadStartTime)/1000);
-    document.getElementById('loadInfo').textContent = '✓ ' + ENT.length + '实体 ' + EDG.length + '关系 (' + elapsed + 's)';
-    boot();
+    document.getElementById('loadInfo').textContent = '✓ 银河系已加载 (' + elapsed + 's)';
     setTimeout(function(){ document.getElementById('loading').style.display = 'none'; }, 600);
   }).catch(function(e) {
     clearTimeout(loadTimeout);
-    console.error('数据加载失败:', e);
-    document.getElementById('loadInfo').innerHTML = '⛔ 数据加载失败<br><span style="font-size:9px;color:#555">' + (e.message || '网络异常') + '</span>';
+    console.error('银河系索引加载失败:', e);
+    document.getElementById('loadInfo').innerHTML = '⛔ 银河系索引加载失败<br><span style="font-size:9px;color:#555">' + (e.message || '网络异常') + '</span>';
     document.getElementById('retryArea').style.display = 'block';
     document.getElementById('gLvl').textContent = '银河系 · 加载失败';
   });
 }
 
+// 加载太阳系数据
+function loadSectorData(sectorName, callback) {
+  if (curSectorData && curSectorData.name === sectorName) {
+    callback(curSectorData);
+    return;
+  }
+  var safeName = sectorName.replace('-', '_').replace(' ', '_');
+  var url = 'data/sector-' + safeName + '.json';
+  document.getElementById('loadInfo').textContent = '📥 加载 ' + sectorName + '...';
+  document.getElementById('gLvl').textContent = '银河系 · 下载中';
+  
+  fetch(url).then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).then(function(data) {
+    curSectorData = { name: sectorName, entities: data.entities, edges: data.edges };
+    // 填充 em 映射
+    data.entities.forEach(function(e) { em[e.id] = e; });
+    callback(data);
+  }).catch(function(e) {
+    console.error('行业数据加载失败:', e);
+    document.getElementById('loadInfo').innerHTML = '⛔ ' + sectorName + ' 数据加载失败<br><span style="font-size:9px;color:#555">' + (e.message || '网络异常') + '</span>';
+    document.getElementById('retryArea').style.display = 'block';
+  });
+}
+
+// 加载 edgeIndex（聚焦时按需加载）
+function loadEdgeIndex(callback) {
+  if (edgeIndexLoaded) {
+    callback();
+    return;
+  }
+  document.getElementById('loadInfo').textContent = '📥 加载关系索引...';
+  fetch('data/edge-index.json').then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).then(function(idx) {
+    EIX = idx;
+    edgeIndexLoaded = true;
+    callback();
+  }).catch(function(e) {
+    console.error('edgeIndex加载失败:', e);
+    document.getElementById('loadInfo').innerHTML = '⛔ 关系索引加载失败<br><span style="font-size:9px;color:#555">' + (e.message || '网络异常') + '</span>';
+  });
+}
+
 // 启动加载
-loadData();
+loadGalaxyIndex();
 </script>
 </body>
 </html>
