@@ -218,23 +218,22 @@ function solar(galName) {
         var sid = 's_' + k;
         var starAngle = angleOff + (k / Object.keys(grp).length) * Math.PI * 2;
         var starDist = isSub ? 18 : 0;
-        var sr = isSub ? calcNodeSize(ge.length, 5, 10) : calcNodeSize(ge.length, 7, 14);
         
+        // Star node (sub-industry marker) - same small size as entities
         nodes.push({
           id: sid, name: gk, nodeType: 'star', count: ge.length,
-          color: isSub ? '#FFD700' : '#4A90D9', val: sr * 0.5,
-          x: Math.cos(starAngle) * starDist, y: Math.sin(starAngle) * starDist, z: 0,
-          desc: (isSub ? '细分: ' : '') + gk + '·' + ge.length + '家'
+          color: '#FFD700', val: 1,
+          x: Math.cos(starAngle) * starDist, y: Math.sin(starAngle) * starDist, z: 0
         });
         nid[sid] = true;
         
         ge.forEach(function(e, i) {
           var ea = starAngle + (i / ge.length) * Math.PI * 2;
-          var baseEd = Math.max(12, Math.min(40, 8 + Math.log10(ge.length) * 15));
-          var ed = baseEd * (0.7 + Math.random() * 0.6);
+          var ed = Math.max(12, Math.min(45, 6 + Math.log10(ge.length) * 18)) * (0.6 + Math.random() * 0.8);
+          // All entities same size for clean 2D look
           nodes.push({
             id: e.id, name: e.name, nodeType: 'plnt', typeLabel: e.typeLabel,
-            desc: e.desc, color: e.color, val: e.core ? 0.5 : 0.3,
+            desc: e.desc, color: e.color, val: 0.4,
             x: Math.cos(ea) * ed + Math.cos(starAngle) * starDist,
             y: Math.sin(ea) * ed + Math.sin(starAngle) * starDist,
             z: 0,
