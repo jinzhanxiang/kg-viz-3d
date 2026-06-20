@@ -90,13 +90,15 @@ function transitionTo(callback, duration) {
 // ===== 创建文字精灵（增强版） =====
 function mkLabel(text, color, size, bg) {
   size = size || 32; color = color || '#fff'; bg = bg || 'rgba(0,0,0,0.65)';
+  var dpr = window.devicePixelRatio || 1;
   var c = document.createElement('canvas');
-  c.width = 1280; c.height = 200;
   var x = c.getContext('2d');
   x.font = 'bold ' + size + 'px "PingFang SC","Microsoft YaHei",sans-serif';
   var tw = Math.ceil(x.measureText(text).width);
-  c.width = tw + 40; c.height = 200;
+  c.width = (tw + 40) * dpr;
+  c.height = 200 * dpr;
   x = c.getContext('2d');
+  x.scale(dpr, dpr);
   x.font = 'bold ' + size + 'px "PingFang SC","Microsoft YaHei",sans-serif';
   x.fillStyle = bg;
   var r = 12;
@@ -212,9 +214,9 @@ function solar(galName) {
       
       ge.forEach(function(e, i) {
         var ea = starAngle + (i / ge.length) * Math.PI * 2;
-        var baseEd = Math.max(12, Math.min(35, 8 + ge.length / 6));
+        var baseEd = Math.max(12, Math.min(60, 10 + Math.log10(ge.length) * 20));
         var ed = baseEd * (0.6 + Math.random() * 0.8);
-        var pVal = e.core ? calcNodeSize(1, 4.5, 7) : calcNodeSize(1, 3, 5);
+        var pVal = e.core ? 1 : 0.5;
         nodes.push({
           id: e.id, name: e.name, nodeType: 'plnt', typeLabel: e.typeLabel,
           desc: e.desc, color: e.color, val: pVal * pVal,
@@ -239,8 +241,8 @@ function solar(galName) {
       label: function(n) { return n.name + (n.typeLabel ? '\n' + n.typeLabel : ''); },
       cam: { x: -30, y: 0, z: 60 },
       phys: false,
-      linkOpacity: 0.4,
-      linkWidth: function(l) { return l.type === '关联' ? 2.5 : 4; }
+      linkOpacity: 0.5,
+      linkWidth: function(l) { return l.type === '关联' ? 3 : 5; }
     });
   }, 600);
 }
@@ -256,20 +258,20 @@ function render3d(nodes, edges, opt) {
     var linkOpacity = opt.linkOpacity !== undefined ? opt.linkOpacity : 0.15;
     var linkWidth = opt.linkWidth !== undefined ? opt.linkWidth : function() { return 2; };
     
-    g = ForceGraph3D()(document.getElementById('graph-container'))
+    g = ForceGraph3D({ rendererConfig: { antialias: true } })(document.getElementById('graph-container'))
       .graphData({ nodes: nodes, links: edges })
       .nodeId('id')
       .nodeColor(function(n) { return n.color || '#888'; })
       .nodeVal(function(n) { return n.val || 3; })
-      .nodeOpacity(0.9)
-      .nodeResolution(16)
+      .nodeOpacity(0.85)
+      .nodeResolution(8)
       .nodeThreeObject(opt.obj || null)
-      .linkColor(function(l) { return l.color || '#555'; })
+      .linkColor(function(l) { return l.color || '#888'; })
       .linkWidth(linkWidth)
       .linkOpacity(linkOpacity)
       .linkDirectionalArrowLength(3)
       .linkDirectionalArrowRelPos(0.7)
-      .linkDirectionalArrowColor(function(l) { return l.color || '#555'; })
+      .linkDirectionalArrowColor(function(l) { return l.color || '#888'; })
       .backgroundColor('#050510')
       .enableNodeDrag(false)
       .enableNavigationControls(true)
