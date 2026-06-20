@@ -256,8 +256,19 @@ function solar(galName) {
         focusable: true,
         label: function(n) { return n.name + (n.typeLabel ? '\n' + n.typeLabel : ''); },
         phys: false,
-        linkOpacity: 0.8,
-        linkWidth: function(l) { return l.type === '关联' ? 3 : 6; }
+        linkColor: function(l) {
+          // Brighten dark links for visibility on dark background
+          var c = l.color || '#888';
+          if (c === '#555555' || c === '#555' || c === '#444') return '#AAAAAA';
+          return c;
+        },
+        linkOpacity: 0.9,
+        linkWidth: function(l) { return 8; },
+        linkDirectionalArrowLength: 6,
+        linkDirectionalArrowRelPos: 0.6,
+        linkDirectionalParticles: 2,
+        linkDirectionalParticleSpeed: 0.005,
+        linkDirectionalParticleWidth: 4
       });
     });
   }, 600);
@@ -286,6 +297,7 @@ function render3d(nodes, edges, opt) {
     var linkOpacity = opt.linkOpacity !== undefined ? opt.linkOpacity : 0.15;
     var linkWidth = opt.linkWidth !== undefined ? opt.linkWidth : function() { return 2; };
     var focusable = opt.focusable !== undefined ? opt.focusable : false;
+    var linkColorFn = opt.linkColor || function(l) { return l.color || '#888'; };
     
     g = ForceGraph3D({ rendererConfig: { antialias: true } })(document.getElementById('graph-container'))
       .graphData({ nodes: nodes, links: edges })
@@ -295,15 +307,15 @@ function render3d(nodes, edges, opt) {
       .nodeOpacity(0.9)
       .nodeResolution(16)
       .nodeThreeObject(opt.obj || null)
-      .linkColor(function(l) { return l.color || '#888'; })
+      .linkColor(linkColorFn)
       .linkWidth(linkWidth)
       .linkOpacity(linkOpacity)
-      .linkDirectionalArrowLength(3)
-      .linkDirectionalArrowRelPos(0.7)
+      .linkDirectionalArrowLength(opt.linkDirectionalArrowLength || 3)
+      .linkDirectionalArrowRelPos(opt.linkDirectionalArrowRelPos || 0.7)
       .linkDirectionalArrowColor(function(l) { return l.color || '#888'; })
-      .linkDirectionalParticles(1)
-      .linkDirectionalParticleSpeed(0.003)
-      .linkDirectionalParticleWidth(2)
+      .linkDirectionalParticles(opt.linkDirectionalParticles || 1)
+      .linkDirectionalParticleSpeed(opt.linkDirectionalParticleSpeed || 0.003)
+      .linkDirectionalParticleWidth(opt.linkDirectionalParticleWidth || 2)
       .linkDirectionalParticleColor(function(l) { return l.color || '#888'; })
       .backgroundColor('#050510')
       .enableNodeDrag(false)
