@@ -527,59 +527,85 @@ document.body.addEventListener('mousemove', function(e) {
 window.addEventListener('resize', function() { if (g) { g.width(window.innerWidth); g.height(window.innerHeight); } });
 
 // ===== 初始化 =====
-// 加载数据并启动
+// 加载数据并启动（优先使用gzip压缩版 5.6MB→0.9MB）
 var loadStartTime = Date.now();
 
-// 阶段性加载提示
 document.getElementById('loadInfo').textContent = '⏳ 加载基础库...';
 setTimeout(function() {
   if (!ENT) {
-    document.getElementById('loadInfo').textContent = '📥 正在下载数据(5.8MB)...';
+    document.getElementById('loadInfo').textContent = '📥 正在下载数据...';
     document.getElementById('gLvl').textContent = '银河系 · 下载中';
   }
 }, 1000);
 setTimeout(function() {
   if (!ENT) {
-    document.getElementById('loadInfo').textContent = '📥 下载中(5.8MB)，请稍候...';
+    document.getElementById('loadInfo').textContent = '📥 下载中(压缩版~0.9MB)，请稍候...';
   }
 }, 5000);
 setTimeout(function() {
   if (!ENT) {
-    document.getElementById('loadInfo').textContent = '📥 正在下载... 数据较大(5.8MB)，耐心等待';
+    document.getElementById('loadInfo').textContent = '📥 仍在下载... 网络较慢请耐心等待';
   }
 }, 15000);
 
-// 30秒超时保护
+// 60秒超时保护
 var loadTimeout = setTimeout(function() {
   if (!ENT) {
-    document.getElementById('loadInfo').innerHTML = '⛔ 加载超时(30s)<br>请检查网络或使用WiFi';
+    document.getElementById('loadInfo').innerHTML = '⛔ 加载超时(60s)<br>请检查网络或使用WiFi';
     document.getElementById('retryArea').style.display = 'block';
     document.getElementById('gLvl').textContent = '银河系 · 加载失败';
   }
-}, 30000);
+}, 60000);
 
-fetch('data.json').then(function(r){
-  document.getElementById('loadInfo').textContent = '📦 解析数据中...';
-  return r.json();
-}).then(function(d){
-  clearTimeout(loadTimeout);
-  ENT = d.entities;
-  EDG = d.edges;
-  EIX = d.entityIndex || {};
-  d.entities.forEach(function(e){ em[e.id] = e; });
-  document.getElementById('sN').textContent = ENT.length;
-  document.getElementById('sE').textContent = EDG.length;
-  document.getElementById('sG').textContent = GLR.length;
-  document.getElementById('loadInfo').textContent = '✓ ' + ENT.length + '实体 ' + EDG.length + '关系 (' + Math.round((Date.now()-loadStartTime)/1000) + 's)';
-  boot();
-  setTimeout(function(){ document.getElementById('loading').style.display = 'none'; }, 600);
-}).catch(function(e){
-  clearTimeout(loadTimeout);
-  console.error('数据加载失败:', e);
-  document.getElementById('loadInfo').innerHTML = '⛔ 数据加载失败<br><span style="font-size:9px;color:#555">' + (e.message || '网络异常') + '</span>';
-  document.getElementById('retryArea').style.display = 'block';
-  document.getElementById('gLvl').textContent = '银河系 · 加载失败';
-});
+// 数据加载函数（支持gzip解压）
+function loadData() {
+  document.getElementById('loadInfo').textContent = '📦 下载数据...';
+
+  // 尝试使用gzip压缩版（原生DecompressionStream，Chrome80+/Firefox80+/Safari16.4+）
+  function tryGzip() {
+    if (typeof DecompressionStream === 'undefined') return Promise.reject(new Error('no native gzip'));
+    return fetch('data.json.gz').then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.blob();
+    }).then(function(blob) {
+      document.getElementById('loadInfo').textContent = '📦 解压数据中...';
+      var stream = blob.stream().pipeThrough(new DecompressionStream('gzip'));
+      return new Response(stream).json();
+    });
+  }
+
+  function tryPlain() {
+    document.getElementById('loadInfo').textContent = '📥 下载原始数据(5.6MB)...';
+    return fetch('data.json').then(function(r) { return r.json(); });
+  }
+
+  return tryGzip().catch(function(e) {
+    console.log('gzip fallback:', e.message);
+    return tryPlain();
+  }).then(function(d) {
+    clearTimeout(loadTimeout);
+    ENT = d.entities;
+    EDG = d.edges;
+    EIX = d.entityIndex || {};
+    if (d.entities) d.entities.forEach(function(e){ em[e.id] = e; });
+    document.getElementById('sN').textContent = ENT.length;
+    document.getElementById('sE').textContent = EDG.length;
+    document.getElementById('sG').textContent = GLR.length;
+    var elapsed = Math.round((Date.now()-loadStartTime)/1000);
+    document.getElementById('loadInfo').textContent = '✓ ' + ENT.length + '实体 ' + EDG.length + '关系 (' + elapsed + 's)';
+    boot();
+    setTimeout(function(){ document.getElementById('loading').style.display = 'none'; }, 600);
+  }).catch(function(e) {
+    clearTimeout(loadTimeout);
+    console.error('数据加载失败:', e);
+    document.getElementById('loadInfo').innerHTML = '⛔ 数据加载失败<br><span style="font-size:9px;color:#555">' + (e.message || '网络异常') + '</span>';
+    document.getElementById('retryArea').style.display = 'block';
+    document.getElementById('gLvl').textContent = '银河系 · 加载失败';
+  });
+}
+
+// 启动加载
+loadData();
 </script>
 </body>
 </html>
