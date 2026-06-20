@@ -362,7 +362,7 @@ function render3d(nodes, edges, opt) {
       } else {
         g.controls().autoRotate = false;
         // 2D太阳系：相机从上方俯视
-        fitCamera();
+        fitCamera(1.8, 55); // 太阳系视图：相机倾斜55度，连线清晰可见
       }
     }, 200);
     
@@ -488,8 +488,9 @@ function doFocusMode(node) {
 }
 
 // ===== 自适应相机（适配所有屏幕比例）=====
-function fitCamera(margin) {
+function fitCamera(margin, tiltDeg) {
   margin = margin || 1.8;
+  tiltDeg = tiltDeg || 0; // 相机倾斜角度（度），0=正上方俯视，45=斜45度
   if (!g) return;
   var d = g.graphData();
   if (!d.nodes.length) return;
@@ -512,7 +513,15 @@ function fitCamera(margin) {
   var cy = (bounds.minY + bounds.maxY) / 2;
   var cz = (bounds.minZ + bounds.maxZ) / 2;
   setTimeout(function() {
-    g.cameraPosition({ x: cx, y: cy, z: cz + dist }, { x: cx, y: cy, z: cz }, 0);
+    if (tiltDeg > 0) {
+      // 倾斜相机：绕X轴旋转，使相机从斜上方观看，连线圆柱体可见
+      var rad = tiltDeg * Math.PI / 180;
+      var dz = dist * Math.cos(rad);
+      var dy = dist * Math.sin(rad);
+      g.cameraPosition({ x: cx, y: cy + dy, z: cz + dz }, { x: cx, y: cy, z: cz }, 0);
+    } else {
+      g.cameraPosition({ x: cx, y: cy, z: cz + dist }, { x: cx, y: cy, z: cz }, 0);
+    }
   }, 50);
 }
 function showD(n) {
