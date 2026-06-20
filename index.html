@@ -3,75 +3,71 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>🌌 知识图谱 3D 星系</title>
+<title>🌌 知识图谱星系</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;background:#050510;color:#e0e0e0;overflow:hidden;height:100vh;width:100vw}
-#info{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:100;background:rgba(5,5,16,0.85);padding:4px 14px;border-radius:16px;border:1px solid rgba(255,255,255,0.06);font-size:12px;color:#aaa;backdrop-filter:blur(12px);white-space:nowrap;line-height:1.6}
+body{font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;background:#0a0a1a;color:#e0e0e0;overflow:hidden;height:100vh;width:100vw}
+#svg{position:fixed;inset:0;z-index:1}
+#info{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:100;background:rgba(10,10,26,0.9);padding:4px 14px;border-radius:16px;border:1px solid rgba(255,255,255,0.1);font-size:12px;color:#aaa;white-space:nowrap}
 #info strong{color:#fff}
-#info .lvl{font-size:10px;color:#666;margin-left:6px}
-#info .focus-badge{display:none;background:#4A90D9;color:#fff;font-size:9px;padding:1px 6px;border-radius:8px;margin-left:6px;vertical-align:middle}
-#info .focus-badge.active{display:inline-block}
-#search{position:fixed;top:12px;right:14px;z-index:100;background:rgba(20,20,40,0.85);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:4px 10px;color:#ddd;font-size:11px;width:110px;outline:none;backdrop-filter:blur(12px)}
+#info .badge{display:none;background:#4A90D9;color:#fff;font-size:9px;padding:1px 6px;border-radius:8px;margin-left:6px}
+#info .badge.active{display:inline-block}
+#search{position:fixed;top:12px;right:14px;z-index:100;background:rgba(20,20,40,0.9);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:4px 10px;color:#ddd;font-size:11px;width:110px;outline:none}
 #search:focus{border-color:#4A90D9;width:150px}
-#legend{position:fixed;bottom:14px;left:14px;z-index:100;background:rgba(5,5,16,0.8);padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);font-size:9px;backdrop-filter:blur(12px)}
-.legend-item{display:flex;align-items:center;gap:3px;padding:1px 0}
-.legend-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.legend-line{width:10px;height:2px;border-radius:1px;flex-shrink:0}
+#legend{position:fixed;bottom:14px;left:14px;z-index:100;background:rgba(10,10,26,0.85);padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);font-size:9px}
+.legend-item{display:flex;align-items:center;gap:3px;margin:2px 0}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.legend-line{width:12px;height:2px;border-radius:1px;flex-shrink:0;background:#888}
 .legend-label{color:#999}
-#stats{position:fixed;bottom:14px;right:14px;z-index:100;background:rgba(5,5,16,0.85);padding:5px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);font-size:9px;color:#666;text-align:right;backdrop-filter:blur(12px);line-height:1.4}
+#stats{position:fixed;bottom:14px;right:14px;z-index:100;background:rgba(10,10,26,0.85);padding:5px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);font-size:9px;color:#666;text-align:right}
 #stats strong{color:#aaa}
-#focus-hint{position:fixed;bottom:50px;left:50%;transform:translateX(-50%);z-index:100;background:rgba(74,144,217,0.15);padding:4px 12px;border-radius:12px;border:1px solid rgba(74,144,217,0.3);font-size:10px;color:#4A90D9;display:none;backdrop-filter:blur(8px);pointer-events:none}
-#tooltip{position:fixed;padding:6px 10px;background:rgba(10,10,25,0.92);border:1px solid rgba(255,255,255,0.1);border-radius:6px;font-size:10px;pointer-events:none;z-index:200;max-width:250px;display:none;backdrop-filter:blur(16px)}
+#tooltip{position:fixed;padding:6px 10px;background:rgba(10,10,30,0.95);border:1px solid rgba(255,255,255,0.1);border-radius:6px;font-size:10px;pointer-events:none;z-index:200;max-width:250px;display:none;backdrop-filter:blur(16px)}
 #tooltip .tt-name{font-size:12px;font-weight:600;color:#fff}
 #tooltip .tt-type{font-size:9px;color:#999}
-#tooltip .tt-desc{font-size:10px;color:#aaa}
-#node-detail{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:300;background:rgba(12,12,30,0.96);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:14px;max-width:380px;width:85%;max-height:60vh;overflow-y:auto;display:none;backdrop-filter:blur(20px)}
+#tooltip .tt-desc{font-size:10px;color:#aaa;margin-top:4px}
+#node-detail{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:300;background:rgba(12,12,30,0.98);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:14px;max-width:380px;width:85%;max-height:60vh;overflow-y:auto;display:none}
 #node-detail h2{font-size:15px;margin-bottom:2px;display:flex;align-items:center;gap:5px;color:#fff}
 #node-detail .nd-type{font-size:9px;padding:1px 5px;border-radius:4px}
 #node-detail .nd-meta{font-size:10px;color:#888;margin-bottom:5px}
 #node-detail .nd-desc{font-size:11px;color:#bbb;line-height:1.4;margin-bottom:6px}
-#node-detail .nd-rel-item{padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.03);display:flex;gap:3px;align-items:center;font-size:10px;cursor:pointer;transition:background .1s}
+#node-detail .nd-rel-item{padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.03);display:flex;gap:3px;align-items:center;font-size:10px;cursor:pointer;transition:background .1s}
 #node-detail .nd-rel-item:hover{background:rgba(74,144,217,0.1)}
-#node-detail .close-btn{float:right;cursor:pointer;font-size:16px;color:#666;padding:0 3px;border-radius:3px;line-height:1}
-#node-detail .close-btn:hover{color:#fff;background:rgba(255,255,255,0.08)}
-#loading{position:fixed;inset:0;z-index:9999;background:#050510;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#666;font-size:13px;font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif}
+#node-detail .close-btn{float:right;cursor:pointer;font-size:16px;color:#666;padding:0 3px;line-height:1}
+#node-detail .close-btn:hover{color:#fff}
+#loading{position:fixed;inset:0;z-index:9999;background:#0a0a1a;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#666;font-size:13px}
 #loading .spinner{width:28px;height:28px;border:3px solid rgba(74,144,217,0.15);border-top-color:#4A90D9;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px}
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes pulse-glow{0%,100%{opacity:1;filter:brightness(1)}50%{opacity:0.8;filter:brightness(1.6)}}
-#transition-overlay{position:fixed;inset:0;z-index:500;background:#050510;opacity:0;pointer-events:none;transition:opacity 0.6s ease}
-#transition-overlay.active{opacity:1}
-#highlight-panel{position:fixed;top:50px;right:14px;transform:none;z-index:400;background:rgba(5,5,16,0.9);border:1px solid rgba(74,144,217,0.3);border-radius:12px;padding:12px 16px;min-width:200px;max-height:60vh;overflow-y:auto;display:none;backdrop-filter:blur(16px)}
+#focus-hint{position:fixed;bottom:50px;left:50%;transform:translateX(-50%);z-index:100;background:rgba(74,144,217,0.15);padding:4px 12px;border-radius:12px;border:1px solid rgba(74,144,217,0.3);font-size:10px;color:#4A90D9;display:none}
+#highlight-panel{position:fixed;top:50px;right:14px;z-index:400;background:rgba(10,10,26,0.9);border:1px solid rgba(74,144,217,0.3);border-radius:12px;padding:12px 16px;min-width:200px;max-height:60vh;overflow-y:auto;display:none}
 #highlight-panel h3{font-size:13px;color:#fff;margin-bottom:8px;display:flex;align-items:center;gap:6px}
 #highlight-panel .hp-count{font-size:10px;color:#666;margin-bottom:4px}
 #highlight-panel .hp-item{font-size:11px;color:#aaa;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;gap:4px;cursor:pointer;transition:background .1s}
 #highlight-panel .hp-item:hover{background:rgba(74,144,217,0.1)}
-#highlight-panel .hp-item:last-child{border-bottom:none}
-#highlight-panel .hp-arrow{color:#4A90D9;font-size:9px;margin-right:2px;flex-shrink:0}
+#highlight-panel .hp-arrow{color:#4A90D9;font-size:9px;margin-right:2px}
 #highlight-panel .hp-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
-#highlight-panel .hp-rel-type{font-size:8px;color:#666;background:rgba(255,255,255,0.05);padding:0 3px;border-radius:2px;flex-shrink:0}
+#highlight-panel .hp-rel-type{font-size:8px;color:#666;background:rgba(255,255,255,0.05);padding:0 3px;border-radius:2px}
 #highlight-panel .hp-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
-#highlight-panel .hp-close{float:right;cursor:pointer;font-size:14px;color:#555;padding:0 2px;line-height:1}
+#highlight-panel .hp-close{float:right;cursor:pointer;font-size:14px;color:#555;line-height:1}
 #highlight-panel .hp-close:hover{color:#fff}
 #highlight-panel .hp-exit-btn{display:block;width:100%;margin-top:6px;padding:4px 0;background:rgba(74,144,217,0.15);border:1px solid rgba(74,144,217,0.3);border-radius:6px;color:#4A90D9;font-size:10px;cursor:pointer;text-align:center}
 #highlight-panel .hp-exit-btn:hover{background:rgba(74,144,217,0.25)}
-::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#444;border-radius:2px}
+.zoom-info{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);font-size:9px;color:#555;z-index:100}
 </style>
 </head>
 <body>
-<div id="loading"><div class="spinner"></div><div>🌌 加载星系...</div><div id="loadInfo" style="font-size:11px;color:#666;margin-top:4px;text-align:center;padding:0 20px"></div><div id="retryArea" style="display:none;margin-top:8px"><button onclick="location.reload()" style="background:#4A90D9;border:none;color:#fff;padding:5px 16px;border-radius:6px;font-size:11px;cursor:pointer">🔄 刷新重试</button></div></div>
-<div id="transition-overlay"></div>
-<div id="graph-container" style="position:fixed;inset:0;z-index:1"></div>
-<div id="info">🌌 <strong id="gTitle">知识图谱星系</strong><span class="lvl" id="gLvl">银河系 · 加载中</span><span class="focus-badge" id="focusBadge">🔍 聚焦中</span></div>
-<input id="search" placeholder="🔍 搜索..." oninput="searchNode(this.value)">
+<div id="loading"><div class="spinner"></div><div>🌌 加载星系...</div><div id="loadInfo" style="font-size:11px;color:#666;margin-top:4px;text-align:center;padding:0 20px"></div></div>
+
+<div id="svg"></div>
+
+<div id="info">🌌 <strong id="gTitle">知识图谱星系</strong><span id="gLvl" style="color:#666;margin-left:8px">加载中</span><span class="badge" id="focusBadge">🔍 聚焦中</span></div>
+<input id="search" placeholder="🔍 搜索...">
 <div id="legend">
   <div class="legend-item"><div class="legend-dot" style="background:#FF6B6B"></div><div class="legend-label">核心节点</div></div>
   <div class="legend-item"><div class="legend-dot" style="background:#4A90D9"></div><div class="legend-label">普通节点</div></div>
-  <div class="legend-item" style="margin-top:3px;border-top:1px solid rgba(255,255,255,0.05);padding-top:3px"><div class="legend-line" style="background:#888"></div><div class="legend-label">线条=关系</div></div>
-  <div class="legend-item"><div class="legend-line" style="background:#FF6B6B"></div><div class="legend-label">关键关联</div></div>
-  <div class="legend-item"><span style="color:#4A90D9;font-size:8px">◆</span><div class="legend-label">箭头方向</div></div>
+  <div class="legend-item" style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(255,255,255,0.05)"><div class="legend-line"></div><div class="legend-label">关系连线</div></div>
+  <div class="legend-item" style="margin-top:2px"><div class="legend-dot" style="background:#FFD700"></div><div class="legend-label">子行业</div></div>
 </div>
-<div id="stats"><strong id="sN">?</strong>实体 <strong id="sE">?</strong>关系 <strong id="sG">?</strong>银河</div>
+<div id="stats"><strong id="sN">?</strong>节点 <strong id="sE">?</strong>关系</div>
 <div id="tooltip"></div>
 <div id="focus-hint">🔄 点击空白处退出聚焦 · Esc</div>
 <div id="node-detail"><span class="close-btn" onclick="closeD()">✕</span><div id="dContent"></div></div>
@@ -79,351 +75,462 @@ body{font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;backgr
   <span class="hp-close" onclick="exitFocus()">✕</span>
   <h3>🔗 关联关系</h3>
   <div id="hpContent"></div>
-  <div class="hp-exit-btn" onclick="exitFocus()">← 退出聚焦</div>
+  <button class="hp-exit-btn" onclick="exitFocus()">← 退出聚焦</button>
 </div>
 
-<!-- CDN 脚本 - 必须按顺序加载 -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://unpkg.com/3d-force-graph@1.67.0/dist/3d-force-graph.min.js"></script>
+<!-- D3.js 核心库 -->
+<script src="https://d3js.org/d3.v7.min.js"></script>
 
 <!-- 主应用代码 -->
 <script>
 // ===== 数据 =====
-var GLR=[{"name": "新能源电池行业", "count": 1961, "color": "#FF6B6B"}, {"name": "电力设备", "count": 1860, "color": "#FFB347"}, {"name": "医药", "count": 271, "color": "#FFD700"}, {"name": "半导体", "count": 246, "color": "#48C9B0"}, {"name": "低空经济", "count": 202, "color": "#4A90D9"}, {"name": "电力", "count": 165, "color": "#50C878"}, {"name": "机械设备", "count": 144, "color": "#9B59B6"}, {"name": "人工智能", "count": 123, "color": "#E91E63"}, {"name": "汽车零部件", "count": 118, "color": "#00BCD4"}, {"name": "有色金属", "count": 104, "color": "#8BC34A"}, {"name": "军工", "count": 87, "color": "#CDDC39"}, {"name": "科技-主题研究", "count": 60, "color": "#FF9800"}, {"name": "金融", "count": 51, "color": "#795548"}, {"name": "光伏设备", "count": 47, "color": "#607D8B"}, {"name": "证券", "count": 42, "color": "#E74C3C"}, {"name": "机械", "count": 30, "color": "#F39C12"}, {"name": "金融-主题研究", "count": 30, "color": "#1ABC9C"}, {"name": "金融-跨领域研究", "count": 29, "color": "#3498DB"}, {"name": "消费", "count": 17, "color": "#2ECC71"}, {"name": "地产", "count": 13, "color": "#9B59B6"}, {"name": "未分类", "count": 6, "color": "#34495E"}, {"name": "金融-宏观分析", "count": 6, "color": "#16A085"}, {"name": "宏观分析", "count": 5, "color": "#D35400"}], ENT=null, EDG=null, EIX=null, em={};
-var g=null, curLv='gal', curGal=null, autoRot=true, curFocus=null, connectedIds=null, focusTimer=null;
+var GAL = [
+  {"name":"新能源电池行业","count":1961,"color":"#FF6B6B"},
+  {"name":"电力设备","count":1860,"color":"#FFB347"},
+  {"name":"医药","count":271,"color":"#FFD700"},
+  {"name":"半导体","count":246,"color":"#48C9B0"},
+  {"name":"低空经济","count":202,"color":"#4A90D9"},
+  {"name":"电力","count":165,"color":"#50C878"},
+  {"name":"机械设备","count":144,"color":"#9B59B6"},
+  {"name":"人工智能","count":123,"color":"#E91E63"},
+  {"name":"汽车零部件","count":118,"color":"#00BCD4"},
+  {"name":"有色金属","count":104,"color":"#8BC34A"},
+  {"name":"军工","count":87,"color":"#CDDC39"},
+  {"name":"科技-主题研究","count":60,"color":"#FF9800"},
+  {"name":"金融","count":51,"color":"#795548"},
+  {"name":"光伏设备","count":47,"color":"#607D8B"},
+  {"name":"证券","count":42,"color":"#E74C3C"},
+  {"name":"机械","count":30,"color":"#F39C12"},
+  {"name":"金融-主题研究","count":30,"color":"#1ABC9C"},
+  {"name":"金融-跨领域研究","count":29,"color":"#3498DB"},
+  {"name":"消费","count":17,"color":"#2ECC71"},
+  {"name":"地产","count":13,"color":"#9B59B6"},
+  {"name":"未分类","count":6,"color":"#34495E"},
+  {"name":"金融-宏观分析","count":6,"color":"#16A085"},
+  {"name":"宏观分析","count":5,"color":"#D35400"}
+];
 
-// ===== 过渡动画 =====
-function transitionTo(callback, duration) {
-  duration = duration || 600;
-  document.getElementById('transition-overlay').classList.add('active');
-  setTimeout(function(){
-    callback();
-    setTimeout(function(){
-      document.getElementById('transition-overlay').classList.remove('active');
-    }, 300);
-  }, duration);
-}
+var ENT = null, EDG = null, EIX = null, em = {};
+var svg = null, g = null, zoom = null;
+var curLv = 'gal', curGal = null, curFocus = null, connectedIds = null;
+var simulation = null;
+var focusTimer = null;
+var W = window.innerWidth, H = window.innerHeight;
 
-// ===== 创建文字精灵（增强版） =====
-function mkLabel(text, color, size, bg) {
-  size = size || 32; color = color || '#fff'; bg = bg || 'rgba(0,0,0,0.65)';
-  var dpr = window.devicePixelRatio || 1;
-  var c = document.createElement('canvas');
-  var x = c.getContext('2d');
-  x.font = 'bold ' + size + 'px "PingFang SC","Microsoft YaHei",sans-serif';
-  var tw = Math.ceil(x.measureText(text).width);
-  c.width = (tw + 40) * dpr;
-  c.height = 200 * dpr;
-  x = c.getContext('2d');
-  x.scale(dpr, dpr);
-  x.font = 'bold ' + size + 'px "PingFang SC","Microsoft YaHei",sans-serif';
-  x.fillStyle = bg;
-  var r = 12;
-  x.beginPath();
-  x.moveTo(r, 0); x.lineTo(tw + 20 - r, 0);
-  x.quadraticCurveTo(tw + 20, 0, tw + 20, r);
-  x.lineTo(tw + 20, 140 - r);
-  x.quadraticCurveTo(tw + 20, 140, tw + 20 - r, 140);
-  x.lineTo(r, 140);
-  x.quadraticCurveTo(0, 140, 0, 140 - r);
-  x.lineTo(0, r);
-  x.quadraticCurveTo(0, 0, r, 0);
-  x.closePath();
-  x.fill();
-  x.fillStyle = color;
-  x.textBaseline = 'middle';
-  x.fillText(text, 20, 70);
-  var t = new THREE.CanvasTexture(c);
-  t.needsUpdate = true;
-  t.minFilter = THREE.LinearFilter;
-  var m = new THREE.SpriteMaterial({map: t, transparent: true, depthTest: false, sizeAttenuation: true});
-  var s = new THREE.Sprite(m);
-  s.scale.set(Math.max(7, tw / 15), 3, 1);
-  return s;
-}
+// ===== SVG 初始化 =====
+function initSVG() {
+  d3.select('#svg').selectAll('*').remove();
+  svg = d3.select('#svg')
+    .append('svg')
+    .attr('width', W)
+    .attr('height', H)
+    .style('cursor', 'grab');
 
-// ===== 创建节点 =====
-function makeSphereNode(color, radius, emissive) {
-  var grp = new THREE.Group();
-  var s = new THREE.Mesh(new THREE.SphereGeometry(radius, 32, 32),
-    new THREE.MeshPhongMaterial({color: color, emissive: emissive || color, emissiveIntensity: 0.4, transparent: true, opacity: 0.95}));
-  grp.add(s);
-  return grp;
-}
-
-function makeGlowNode(color, radius, label, labelColor) {
-  var grp = makeSphereNode(color, radius);
-  var l = mkLabel(label, labelColor || '#fff', Math.min(36, Math.max(20, radius * 2.2)));
-  l.position.y = radius + 2;
-  grp.add(l);
-  return grp;
-}
-
-// ===== 节点大小计算 =====
-function calcNodeSize(count, minSize, maxSize) {
-  minSize = minSize || 2;
-  maxSize = maxSize || 8;
-  var logCount = Math.log10(Math.max(1, count));
-  var normalized = Math.min(1, logCount / 4);
-  return minSize + normalized * (maxSize - minSize);
-}
-
-// ===== 银河系 =====
-function boot(glrData) {
-  curLv = 'gal'; curGal = null; GLR = glrData;
-  document.getElementById('gTitle').textContent = '知识图谱星系';
-  document.getElementById('gLvl').textContent = '银河系 · ' + GLR.length + '个';
-  var nodes = GLR.map(function(gal, i) {
-    var a = (i / GLR.length) * Math.PI * 2;
-    var r = 200 + gal.count / 50;
-    var val = 15 + gal.count / 60;
-    return {
-      id: 'g_' + i, name: gal.name, count: gal.count, color: gal.color, val: val,
-      x: Math.cos(a) * r, y: Math.sin(a) * r * 0.6, z: Math.sin(a * 2) * 30,
-      nodeType: 'galaxy'
-    };
-  });
-  render3d(nodes, [], {
-    label: function(n) { return n.name + '\n' + n.count + '家'; },
-    obj: function(n) { return makeGlowNode(n.color, n.val / 2.5, n.name + '(' + n.count + ')', '#fff'); },
-    phys: false,
-    linkOpacity: 0.0,
-    linkWidth: 0
-  });
-}
-
-// ===== 太阳系 =====
-function solar(galName) {
-  transitionTo(function() {
-    curLv = 'sol'; curGal = galName;
-    document.getElementById('gTitle').textContent = galName;
-    document.getElementById('gLvl').textContent = '☉ 太阳系';
-    
-    loadSectorData(galName, function(data) {
-      var ents = data.entities;
-      var edges = data.edges;
-      var grp = {};
-      ents.forEach(function(e) {
-        var k = e.subIndustry || e.sector;
-        if (!grp[k]) grp[k] = [];
-        grp[k].push(e);
-      });
-      
-      var nodes = [], nid = {};
-      var angleOff = Math.random() * Math.PI * 2;
-      
-      Object.keys(grp).sort(function(a, b) { return grp[b].length - grp[a].length; }).forEach(function(gk, k) {
-        var ge = grp[gk];
-        var isSub = gk !== galName;
-        var sid = 's_' + k;
-        var starAngle = angleOff + (k / Object.keys(grp).length) * Math.PI * 2;
-        var starDist = isSub ? 18 : 0;
-        
-        // Star node (sub-industry marker) - same small size as entities
-        nodes.push({
-          id: sid, name: gk, nodeType: 'star', count: ge.length,
-          color: '#FFD700', val: 1,
-          x: Math.cos(starAngle) * starDist, y: Math.sin(starAngle) * starDist, z: 0
-        });
-        nid[sid] = true;
-        
-        ge.forEach(function(e, i) {
-          var ea = starAngle + (i / ge.length) * Math.PI * 2;
-          var ed = Math.max(12, Math.min(45, 6 + Math.log10(ge.length) * 18)) * (0.6 + Math.random() * 0.8);
-          // All entities same size for clean 2D look
-          nodes.push({
-            id: e.id, name: e.name, nodeType: 'plnt', typeLabel: e.typeLabel,
-            desc: e.desc, color: e.color, val: 0.4,
-            x: Math.cos(ea) * ed + Math.cos(starAngle) * starDist,
-            y: Math.sin(ea) * ed + Math.sin(starAngle) * starDist,
-            z: 0,
-            star: sid
-          });
-          nid[e.id] = true;
-        });
-      });
-      
-      var el = edges.filter(function(e) { return nid[e.source] && nid[e.target]; }).map(function(e) {
-        // Use node object references instead of string IDs
-        var srcNode = nodes.find(function(n) { return n.id === e.source; });
-        var tgtNode = nodes.find(function(n) { return n.id === e.target; });
-        if (!srcNode || !tgtNode) return null;
-        return { source: srcNode, target: tgtNode, type: e.type, color: e.color };
-      }).filter(function(e) { return e !== null; });
-      
-      render3d(nodes, el, {
-        obj: null,
-        focusable: true,
-        label: function(n) { return n.name + (n.typeLabel ? '\n' + n.typeLabel : ''); },
-        phys: true,
-        linkColor: function(l) {
-          var c = l.color || '#888';
-          if (c === '#555555' || c === '#555' || c === '#444') return '#AAAAAA';
-          return c;
-        },
-        linkOpacity: 0.9,
-        linkWidth: function(l) { return 2; },
-        linkDirectionalParticles: 2,
-        linkDirectionalParticleSpeed: 0.005,
-        linkDirectionalParticleWidth: 3
-      });
+  zoom = d3.zoom()
+    .scaleExtent([0.1, 4])
+    .on('zoom', function(event) {
+      d3.select('#g').attr('transform', event.transform);
     });
-  }, 600);
+
+  svg.call(zoom);
+  svg.append('g').attr('id', 'g');
+
+  // 背景点击退出聚焦
+  svg.on('click', function(event) {
+    if (event.target === svg.node() && curFocus) exitFocus();
+  });
 }
 
-// ===== 退出聚焦 =====
-function exitFocus() {
+// ===== 力模拟创建 =====
+function createSimulation(nodes, links) {
+  if (simulation) simulation.on('tick', null).on('end', null);
+
+  simulation = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(d => d.id).distance(80).iterations(2))
+    .force('charge', d3.forceManyBody().strength(-300))
+    .force('center', d3.forceCenter(W/2, H/2))
+    .force('collide', d3.forceCollide().radius(25).iterations(2));
+
+  return simulation;
+}
+
+// ===== 银河系视图 =====
+function renderGalaxy() {
+  curLv = 'gal';
+  curGal = null;
   curFocus = null;
   connectedIds = null;
-  if (focusTimer) { cancelAnimationFrame(focusTimer); focusTimer = null; }
-  document.getElementById('highlight-panel').style.display = 'none';
+  if (focusTimer) { clearTimeout(focusTimer); focusTimer = null; }
+
+  document.getElementById('gTitle').textContent = '知识图谱星系';
+  document.getElementById('gLvl').textContent = '银河系 · ' + GAL.length + '个行业';
   document.getElementById('focusBadge').classList.remove('active');
+  document.getElementById('highlight-panel').style.display = 'none';
   document.getElementById('focus-hint').style.display = 'none';
-  if (g) {
-    g.d3ReheatSimulation();
-    g.controls().autoRotate = true;
+
+  // 创建节点数据
+  var nodes = GAL.map(function(d, i) {
+    var angle = (i / GAL.length) * Math.PI * 2;
+    var radius = Math.min(W, H) * 0.35;
+    return {
+      id: d.name,
+      name: d.name,
+      nodeType: 'gal',
+      color: d.color,
+      count: d.count,
+      val: Math.max(15, Math.min(30, Math.log(d.count) * 5)),
+      x: W/2 + Math.cos(angle) * radius,
+      y: H/2 + Math.sin(angle) * radius,
+      fx: W/2 + Math.cos(angle) * radius,
+      fy: H/2 + Math.sin(angle) * radius
+    };
+  });
+
+  // 无连线（银河系只有行业节点）
+  var links = [];
+
+  initSVG();
+  var g = d3.select('#g');
+
+  // 渲染连线
+  var link = g.append('g').attr('class', 'links').selectAll('line')
+    .data(links).enter().append('line')
+    .attr('stroke', '#555').attr('stroke-width', 1).attr('opacity', 0.3);
+
+  // 渲染节点
+  var node = g.append('g').attr('class', 'nodes').selectAll('g')
+    .data(nodes).enter().append('g')
+    .attr('class', 'node')
+    .call(d3.drag()
+      .on('start', dragStarted)
+      .on('drag', dragged)
+      .on('end', dragEnded));
+
+  node.append('circle')
+    .attr('r', function(d) { return d.val; })
+    .attr('fill', function(d) { return d.color; })
+    .attr('stroke', '#fff').attr('stroke-width', 1)
+    .attr('opacity', 0.85);
+
+  node.append('text')
+    .attr('dy', function(d) { return d.val + 12; })
+    .attr('text-anchor', 'middle')
+    .attr('fill', '#ddd').attr('font-size', '10px')
+    .text(function(d) { return d.name + '\n(' + d.count + '家)'); });
+
+  node.on('click', function(event, d) {
+    solar(d.name);
+  });
+
+  node.on('mouseover', function(event, d) {
+    var t = document.getElementById('tooltip');
+    t.style.display = 'block';
+    t.innerHTML = '<div class="tt-name">' + d.name + '</div>' +
+      '<div class="tt-type">行业 · ' + d.count + '家企业</div>';
+    t.style.left = (event.pageX + 10) + 'px';
+    t.style.top = (event.pageY - 10) + 'px';
+  });
+  node.on('mouseout', function() {
+    document.getElementById('tooltip').style.display = 'none';
+  });
+
+  updateStats(nodes.length, links.length);
+  document.getElementById('loading').style.display = 'none';
+}
+
+function dragStarted(event, d) {
+  if (!event.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x;
+  d.fy = d.y;
+}
+function dragged(event, d) {
+  d.fx = event.x;
+  d.fy = event.y;
+}
+function dragEnded(event, d) {
+  if (!event.active) simulation.alphaTarget(0);
+  d.fx = null;
+  d.fy = null;
+}
+
+// ===== 太阳系视图 =====
+function solar(galName) {
+  if (focusTimer) { clearTimeout(focusTimer); focusTimer = null; }
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('loadInfo').textContent = '正在加载 ' + galName + ' ...';
+
+  curLv = 'sol';
+  curGal = galName;
+  curFocus = null;
+  connectedIds = null;
+
+  document.getElementById('gTitle').textContent = galName;
+  document.getElementById('gLvl').textContent = '☉ 太阳系';
+  document.getElementById('focusBadge').classList.remove('active');
+  document.getElementById('highlight-panel').style.display = 'none';
+  document.getElementById('focus-hint').style.display = 'none';
+
+  loadSectorData(galName, function(data) {
+    var ents = data.entities;
+    var edges = data.edges;
+
+    // 按子行业分组
+    var grp = {};
+    ents.forEach(function(e) {
+      var k = e.subIndustry || e.sector || '未分类';
+      if (!grp[k]) grp[k] = [];
+      grp[k].push(e);
+    });
+
+    // 构建节点和连线
+    var nodes = [], nid = {};
+    var starNodes = {};
+
+    // 创建子行业"恒星"节点
+    Object.keys(grp).sort(function(a, b) { return grp[b].length - grp[a].length; }).forEach(function(gk, k) {
+      var ge = grp[gk];
+      var isSub = gk !== galName;
+      var sid = 's_' + k;
+      starNodes[gk] = {
+        id: sid,
+        name: gk,
+        nodeType: isSub ? 'star' : 'center',
+        count: ge.length,
+        color: isSub ? '#FFD700' : '#FF6B6B',
+        val: isSub ? 12 : 20,
+        isCenter: !isSub
+      };
+      nodes.push(starNodes[gk]);
+      nid[sid] = true;
+    });
+
+    // 创建实体"行星"节点
+    Object.keys(grp).forEach(function(gk) {
+      var ge = grp[gk];
+      var star = starNodes[gk];
+      var starIdx = nodes.indexOf(star);
+
+      ge.forEach(function(e) {
+        nodes.push({
+          id: e.id,
+          name: e.name,
+          nodeType: 'plnt',
+          typeLabel: e.typeLabel,
+          desc: e.desc,
+          color: e.color,
+          val: 6,
+          sector: gk,
+          starId: star.id
+        });
+        nid[e.id] = true;
+        em[e.id] = e;
+      });
+    });
+
+    // 构建连线
+    var links = edges.filter(function(e) {
+      return nid[e.source] && nid[e.target];
+    }).map(function(e) {
+      return {
+        source: e.source,
+        target: e.target,
+        type: e.type,
+        color: e.color
+      };
+    });
+
+    // 添加子行业→实体的连线（让力模拟知道层级关系）
+    nodes.forEach(function(n) {
+      if (n.nodeType === 'plnt') {
+        links.push({
+          source: n.starId,
+          target: n.id,
+          type: '归属',
+          color: '#666',
+          isHierarchy: true
+        });
+      }
+    });
+
+    renderForceGraph(nodes, links, {
+      label: function(n) {
+        if (n.nodeType === 'gal') return n.name + '\n(' + n.count + '家)';
+        if (n.nodeType === 'star') return n.name + '\n(' + n.count + '家)';
+        if (n.nodeType === 'center') return n.name;
+        return n.name + (n.typeLabel ? '\n' + n.typeLabel : '');
+      },
+      linkColor: function(l) {
+        if (l.isHierarchy) return '#444';
+        var c = l.color || '#888';
+        if (c === '#555555' || c === '#555' || c === '#444') return '#AAAAAA';
+        return c;
+      },
+      linkWidth: function(l) { return l.isHierarchy ? 1 : 2; },
+      linkOpacity: function(l) { return l.isHierarchy ? 0.3 : 0.6; },
+      nodeRadius: function(n) { return n.val || 5; },
+      focusable: true
+    });
+
+    updateStats(nodes.length, links.length);
+    document.getElementById('loading').style.display = 'none';
+  });
+}
+
+// ===== 力导向图渲染（核心）=====
+function renderForceGraph(nodes, links, options) {
+  if (simulation) simulation.on('tick', null).on('end', null);
+  d3.select('#svg').selectAll('*').remove();
+
+  svg = d3.select('#svg')
+    .attr('width', W).attr('height', H)
+    .style('cursor', 'grab');
+
+  zoom = d3.zoom().scaleExtent([0.1, 4]).on('zoom', function(event) {
+    d3.select('#g').attr('transform', event.transform);
+  });
+  svg.call(zoom);
+
+  var g = svg.append('g').attr('id', 'g');
+
+  // 创建力模拟
+  simulation = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(d => d.id).distance(function(l) {
+      return l.isHierarchy ? 50 : 80;
+    }).iterations(3))
+    .force('charge', d3.forceManyBody().strength(-200))
+    .force('center', d3.forceCenter(W/2, H/2))
+    .force('collide', d3.forceCollide().radius(function(d) { return (d.val || 5) + 10; }).iterations(2));
+
+  // 如果是聚焦模式，中心节点固定
+  if (options.focusNode) {
+    simulation.force('center', d3.forceCenter(W/2, H/2).strength(0.05));
+    options.focusNode.fx = W/2;
+    options.focusNode.fy = H/2;
+  }
+
+  // 渲染连线
+  var link = g.append('g').attr('class', 'links')
+    .selectAll('line')
+    .data(links).enter().append('line')
+    .attr('stroke', options.linkColor || '#888')
+    .attr('stroke-width', options.linkWidth || 1)
+    .attr('opacity', options.linkOpacity || 0.5);
+
+  // 渲染节点
+  var node = g.append('g').attr('class', 'nodes')
+    .selectAll('g')
+    .data(nodes).enter().append('g')
+    .attr('class', 'node')
+    .call(d3.drag()
+      .on('start', dragStarted2)
+      .on('drag', dragged2)
+      .on('end', dragEnded2));
+
+  node.append('circle')
+    .attr('r', options.nodeRadius || function(d) { return d.val || 5; })
+    .attr('fill', function(d) { return d.color || '#888'; })
+    .attr('stroke', function(d) { return d.nodeType === 'star' ? '#FFD700' : '#fff'; })
+    .attr('stroke-width', function(d) { return d.nodeType === 'star' ? 2 : 1; })
+    .attr('opacity', 0.85);
+
+  // 节点标签
+  node.append('text')
+    .attr('dy', function(d) { return (options.nodeRadius || function(n){return n.val||5;})(d) + 10; })
+    .attr('text-anchor', 'middle')
+    .attr('fill', '#ddd').attr('font-size', '9px')
+    .attr('pointer-events', 'none')
+    .text(options.label || function(d) { return d.name; });
+
+  // 节点点击
+  node.on('click', function(event, n) {
+    event.stopPropagation();
+    if (curLv === 'gal') {
+      solar(n.name);
+    } else if (options.focusable && n.nodeType === 'plnt') {
+      focusMode(n);
+    } else if (options.focusable && n.nodeType === 'star') {
+      // 点击子行业恒星，聚焦该子行业
+      focusMode(n);
+    }
+  });
+
+  // 节点悬停
+  node.on('mouseover', function(event, n) {
+    var t = document.getElementById('tooltip');
+    t.style.display = 'block';
+    var html = '<div class="tt-name">' + n.name + '</div>';
+    if (n.typeLabel) html += '<div class="tt-type">' + n.typeLabel + '</div>';
+    if (n.desc) html += '<div class="tt-desc">' + n.desc.substring(0, 100) + '</div>';
+    if (n.count) html += '<div class="tt-type" style="margin-top:4px;color:#4A90D9">' + n.count + '家企业</div>';
+    t.innerHTML = html;
+    t.style.left = (event.pageX + 10) + 'px';
+    t.style.top = (event.pageY - 10) + 'px';
+  });
+  node.on('mouseout', function() {
+    document.getElementById('tooltip').style.display = 'none';
+  });
+
+  //  ticking 更新位置
+  simulation.on('tick', function() {
+    link
+      .attr('x1', function(d) { return d.source.x; })
+      .attr('y1', function(d) { return d.source.y; })
+      .attr('x2', function(d) { return d.target.x; })
+      .attr('y2', function(d) { return d.target.y; });
+
+    node.attr('transform', function(d) {
+      return 'translate(' + d.x + ',' + d.y + ')';
+    });
+  });
+
+  // 初始冷却
+  simulation.on('end', function() {
+    // 模拟运行结束，保持当前状态
+  });
+
+  // 自动缩放适配
+  setTimeout(function() {
+    fitView(g, nodes);
+  }, 500);
+}
+
+function dragStarted2(event, d) {
+  if (!event.active) simulation.alphaTarget(0.3).restart();
+  if (!d.isCenter) {
+    d.fx = d.x;
+    d.fy = d.y;
+  }
+}
+function dragged2(event, d) {
+  if (!d.isCenter) {
+    d.fx = event.x;
+    d.fy = event.y;
+  }
+}
+function dragEnded2(event, d) {
+  if (!event.active) simulation.alphaTarget(0);
+  if (!d.isCenter) {
+    d.fx = null;
+    d.fy = null;
   }
 }
 
-// ===== 3D渲染引擎 =====
-function render3d(nodes, edges, opt) {
-  if (g) { try { g._destructor(); } catch(e){} g = null; }
-  exitFocus();
-  
-  try {
-    var linkOpacity = opt.linkOpacity !== undefined ? opt.linkOpacity : 0.15;
-    var linkWidth = opt.linkWidth !== undefined ? opt.linkWidth : function() { return 2; };
-    var focusable = opt.focusable !== undefined ? opt.focusable : false;
-    var linkColorFn = opt.linkColor || function(l) { return l.color || '#888'; };
-    
-    g = ForceGraph3D({ rendererConfig: { antialias: true } })(document.getElementById('graph-container'))
-      .nodeId('id')
-      .graphData({ nodes: nodes, links: edges })
-      .nodeColor(function(n) { return n.color || '#888'; })
-      .nodeVal(function(n) { return n.val || 3; })
-      .nodeOpacity(0.9)
-      .nodeResolution(16)
-      .nodeThreeObject(opt.obj || null)
-      .linkColor(linkColorFn)
-      .linkWidth(linkWidth)
-      .linkOpacity(linkOpacity)
-      .linkDirectionalArrowLength(opt.linkDirectionalArrowLength || 3)
-      .linkDirectionalArrowRelPos(opt.linkDirectionalArrowRelPos || 0.7)
-      .linkDirectionalArrowColor(function(l) { return l.color || '#888'; })
-      .linkDirectionalParticles(opt.linkDirectionalParticles || 1)
-      .linkDirectionalParticleSpeed(opt.linkDirectionalParticleSpeed || 0.003)
-      .linkDirectionalParticleWidth(opt.linkDirectionalParticleWidth || 2)
-      .linkDirectionalParticleColor(function(l) { return l.color || '#888'; })
-      .backgroundColor('#050510')
-      .enableNodeDrag(false)
-      .enableNavigationControls(true)
-      .showNavInfo(false)
-      .warmupTicks(0)
-      .d3AlphaDecay(opt.phys === false ? 0.98 : 0.98)
-      .d3VelocityDecay(opt.phys === false ? 0.9 : 0.9)
-      .nodeVisibility(function(n) {
-        if (!curFocus || !connectedIds) return true;
-        return connectedIds.has(n.id);
-      })
-      .linkVisibility(function(l) {
-        if (!curFocus || !connectedIds) return true;
-        var srcId = typeof l.source === 'object' ? l.source.id : l.source;
-        var tgtId = typeof l.target === 'object' ? l.target.id : l.target;
-        return srcId === curFocus || tgtId === curFocus;
-      });
-    
-    // ===== 物理引擎设置 =====
-    if (opt.phys === false) {
-      // 银河系视图：禁用力模拟，固定位置
-      g.d3Force('center', null);
-      g.d3Force('charge', null);
-      g.d3Force('link', null);
-      var gd = g.graphData();
-      gd.nodes.forEach(function(nn) {
-        var src = nodes.find(function(x) { return x.id === nn.id; });
-        if (src) { nn.fx = src.x; nn.fy = src.y; nn.fz = src.z; }
-      });
-    } else {
-      // 太阳系视图：2D平面环形布局(禁用力模拟防止飞散)
-      g.d3Force('center', null);
-      g.d3Force('charge', null);
-      g.d3Force('link', null);
-      var gd = g.graphData();
-      gd.nodes.forEach(function(nn) {
-        var src = nodes.find(function(x) { return x.id === nn.id; });
-        if (src) { nn.fx = src.x; nn.fy = src.y; nn.fz = 0; }
-      });
-    }
-    
-    setTimeout(function() {
-      if (opt.phys === false) {
-        g.controls().autoRotate = true;
-        g.controls().autoRotateSpeed = 0.4;
-      } else {
-        g.controls().autoRotate = false;
-        // 2D太阳系：相机从上方俯视
-        fitCamera(1.8, 55); // 太阳系视图：相机倾斜55度，连线清晰可见
-      }
-    }, 200);
-    
-    // Force depthWrite=true on all link cylinders to prevent occlusion
-    setTimeout(function() {
-      try {
-        var sg = g.scene().children.find(function(c) { return c.type === 'Group'; });
-        if (sg) {
-          sg.children.forEach(function(c) {
-            if (c.type === 'Mesh' && c.material && c.material.depthWrite === false) {
-              c.material.depthWrite = true;
-            }
-          });
-        }
-      } catch(e) { console.error('link fix err:', e); }
-    }, 500);
-    
-    g.onNodeClick(function(n) {
-      if (curLv === 'gal') {
-        solar(n.name);
-      } else if (focusable && n.nodeType === 'plnt') {
-        focusMode(n);
-      } else if (focusable && n.nodeType === 'star') {
-        focusMode(n);
-      }
-    });
-    
-    // Click background to exit focus
-    g.onBackgroundClick(function() {
-      if (curFocus) exitFocus();
-    });
-    
-    g.onNodeHover(function(n) {
-      var t = document.getElementById('tooltip');
-      if (n) {
-        t.style.display = 'block';
-        t.innerHTML = '<div class="tt-name">' + n.name + '</div>' +
-          (n.typeLabel ? '<div class="tt-type">' + n.typeLabel + '</div>' : '') +
-          (n.desc ? '<div class="tt-desc">' + n.desc + '</div>' : '') +
-          (curFocus ? '' : '');
-      } else {
-        t.style.display = 'none';
-      }
-    });
-    
-  } catch (e) { console.error('3d err:', e); }
+function fitView(g, nodes) {
+  var x = d3.extent(nodes, d => d.x), y = d3.extent(nodes, d => d.y);
+  var pad = 50;
+  var w = Math.max(x[1] - x[0], 100) + pad * 2;
+  var h = Math.max(y[1] - y[0], 100) + pad * 2;
+  var scale = Math.min((W - pad * 2) / w, (H - pad * 2) / h, 2);
+  var tx = W/2 - scale * (x[0] + x[1]) / 2;
+  var ty = H/2 - scale * (y[0] + y[1]) / 2;
+  svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
 }
 
-// ===== 聚焦模式 =====
+// ===== 聚焦模式（三级页面）=====
 function focusMode(node) {
-  if (!g) return;
-  closeD();
-  
-  // 加载 edgeIndex（如果还没加载）
   if (!EIX || !EIX[node.id]) {
     loadEdgeIndex(function() {
-      if (EIX && EIX[node.id]) {
-        doFocusMode(node);
-      } else {
-        console.log('No edgeIndex for node:', node.id);
-      }
+      if (EIX && EIX[node.id]) doFocusMode(node);
     });
     return;
   }
@@ -431,12 +538,19 @@ function focusMode(node) {
 }
 
 function doFocusMode(node) {
-  var d = g.graphData();
+  if (focusTimer) { clearTimeout(focusTimer); focusTimer = null; }
+  closeD();
+
+  document.getElementById('gTitle').textContent = node.name;
+  document.getElementById('gLvl').textContent = '🔍 聚焦模式';
+  document.getElementById('focusBadge').classList.add('active');
+  document.getElementById('focus-hint').style.display = 'block';
+
+  // 收集相关节点和连线
   var ids = new Set();
   ids.add(node.id);
   var rels = [];
-  
-  // Use edgeIndex for fast lookup
+
   var nodeEdges = EIX[node.id] || [];
   nodeEdges.forEach(function(l) {
     var srcId = typeof l.source === 'object' ? l.source.id : l.source;
@@ -447,90 +561,168 @@ function doFocusMode(node) {
       rels.push({ otherId: otherId, arrow: srcId === node.id ? '→' : '←', type: l.type || '关联', color: l.color || '#888' });
     }
   });
-  
-  curFocus = node.id;
+
   connectedIds = ids;
-  
-  document.getElementById('focusBadge').classList.add('active');
-  document.getElementById('focus-hint').style.display = 'block';
-  
-  g.controls().autoRotate = false;
-  g.cameraPosition(
-    { x: node.x + 5, y: node.y + 3, z: node.z + 8 },
-    { x: node.x, y: node.y, z: node.z },
-    600
-  );
-  
-  g.d3ReheatSimulation();
-  
+
+  // 构建节点数据
+  var focusNode = em[node.id] || { id: node.id, name: node.name, color: node.color || '#4A90D9', typeLabel: node.typeLabel || '' };
+  var nodes = [
+    {
+      id: node.id,
+      name: node.name,
+      nodeType: 'focus',
+      color: focusNode.color || '#4A90D9',
+      val: 18,
+      isCenter: true,
+      typeLabel: focusNode.typeLabel,
+      desc: focusNode.desc
+    }
+  ];
+
+  var links = [];
+
+  rels.forEach(function(r) {
+    var rn = em[r.otherId];
+    if (!rn) return;
+    nodes.push({
+      id: r.otherId,
+      name: rn.name,
+      nodeType: 'plnt',
+      color: rn.color || '#888',
+      val: 7,
+      typeLabel: rn.typeLabel,
+      desc: rn.desc
+    });
+    links.push({
+      source: node.id,
+      target: r.otherId,
+      type: r.type,
+      color: r.color
+    });
+  });
+
+  // 在相关节点之间也添加连线（如果它们之间有关系）
+  rels.forEach(function(r1) {
+    rels.forEach(function(r2) {
+      if (r1.otherId >= r2.otherId) return;
+      var edge = EIX[r1.otherId] || [];
+      var found = edge.find(function(e) {
+        var s = typeof e.source === 'object' ? e.source.id : e.source;
+        var t = typeof e.target === 'object' ? e.target.id : e.target;
+        return (s === r1.otherId && t === r2.otherId) || (s === r2.otherId && t === r1.otherId);
+      });
+      if (found) {
+        links.push({
+          source: r1.otherId,
+          target: r2.otherId,
+          type: found.type || '关联',
+          color: found.color || '#888'
+        });
+      }
+    });
+  });
+
+  // 更新统计
+  updateStats(nodes.length, links.length);
+
+  // 渲染力导向图
+  renderForceGraph(nodes, links, {
+    label: function(n) {
+      if (n.nodeType === 'focus') return n.name;
+      return n.name + (n.typeLabel ? '\n' + n.typeLabel : '');
+    },
+    linkColor: function(l) { return l.color || '#888'; },
+    linkWidth: function(l) { return l.type === '供应' || l.type === '采购' ? 2 : 1; },
+    linkOpacity: function() { return 0.5; },
+    nodeRadius: function(n) { return n.val || 6; },
+    focusable: true,
+    focusNode: nodes[0]  // 中心节点固定
+  });
+
+  // 右侧关联面板
   var hp = document.getElementById('highlight-panel');
   var hpContent = document.getElementById('hpContent');
-  var html = '<div class="hp-count">⚡ ' + rels.length + ' 条关联 · ' + (ids.size - 1) + ' 个节点</div>';
+  var html = '<div class="hp-count">⚡ ' + rels.length + ' 条关联 · ' + (nodes.length - 1) + ' 个相关节点</div>';
   rels.forEach(function(r) {
-    var rn = d.nodes.find(function(n) { return n.id === r.otherId; });
+    var rn = em[r.otherId];
     if (!rn) return;
-    html += '<div class="hp-item" onclick="focusHP(' + "'" + rn.id + "'" + ')">' +
+    html += '<div class="hp-item" onclick="focusHP(\'' + r.otherId + '\')">' +
       '<span class="hp-arrow">' + r.arrow + '</span>' +
-      '<span class="hp-dot" style="background:' + rn.color + '"></span>' +
+      '<span class="hp-dot" style="background:' + (rn.color || '#888') + '"></span>' +
       '<span class="hp-rel-type">' + r.type + '</span>' +
       '<span class="hp-name">' + rn.name + '</span></div>';
   });
   hpContent.innerHTML = html || '<div style="color:#666;font-size:10px;padding:8px 0;text-align:center">无关联</div>';
   hp.style.display = 'block';
-  
-  // Periodic re-render to keep visibility fresh
-  focusTimer = setTimeout(function pulseRefresh() {
-    if (curFocus && g) {
-      g.d3ReheatSimulation();
-      focusTimer = setTimeout(pulseRefresh, 800);
+
+  // 周期性微热力模拟，保持布局活力
+  var tickCount = 0;
+  function pulseRefresh() {
+    if (curFocus && simulation) {
+      simulation.alpha(0.1).restart();
+      tickCount++;
+      if (tickCount < 50) {
+        focusTimer = setTimeout(pulseRefresh, 100);
+      }
     }
-  }, 800);
+  }
+  focusTimer = setTimeout(pulseRefresh, 200);
 }
 
-// ===== 自适应相机（适配所有屏幕比例）=====
-function fitCamera(margin, tiltDeg) {
-  margin = margin || 1.8;
-  tiltDeg = tiltDeg || 0; // 相机倾斜角度（度），0=正上方俯视，45=斜45度
-  if (!g) return;
-  var d = g.graphData();
-  if (!d.nodes.length) return;
-  var bounds = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity, minZ: Infinity, maxZ: -Infinity };
-  d.nodes.forEach(function(n) {
-    if (n.x < bounds.minX) bounds.minX = n.x;
-    if (n.x > bounds.maxX) bounds.maxX = n.x;
-    if (n.y < bounds.minY) bounds.minY = n.y;
-    if (n.y > bounds.maxY) bounds.maxY = n.y;
-    if (n.z < bounds.minZ) bounds.minZ = n.z;
-    if (n.z > bounds.maxZ) bounds.maxZ = n.z;
-  });
-  var sizeX = bounds.maxX - bounds.minX || 1;
-  var sizeY = bounds.maxY - bounds.minY || 1;
-  var sizeZ = bounds.maxZ - bounds.minZ || 1;
-  var maxSize = Math.max(sizeX, sizeY, sizeZ);
-  // Perspective camera FOV=45°, tan(22.5°)≈0.414
-  var dist = (maxSize / 2) / Math.tan(Math.PI / 8) * margin;
-  var cx = (bounds.minX + bounds.maxX) / 2;
-  var cy = (bounds.minY + bounds.maxY) / 2;
-  var cz = (bounds.minZ + bounds.maxZ) / 2;
-  setTimeout(function() {
-    if (tiltDeg > 0) {
-      // 倾斜相机：绕X轴旋转，使相机从斜上方观看，连线圆柱体可见
-      var rad = tiltDeg * Math.PI / 180;
-      var dz = dist * Math.cos(rad);
-      var dy = dist * Math.sin(rad);
-      g.cameraPosition({ x: cx, y: cy + dy, z: cz + dz }, { x: cx, y: cy, z: cz }, 0);
-    } else {
-      g.cameraPosition({ x: cx, y: cy, z: cz + dist }, { x: cx, y: cy, z: cz }, 0);
-    }
-  }, 50);
+function focusHP(id) {
+  if (em[id]) {
+    showD(em[id]);
+  }
 }
+
+function exitFocus() {
+  curFocus = null;
+  connectedIds = null;
+  if (focusTimer) { clearTimeout(focusTimer); focusTimer = null; }
+  document.getElementById('focusBadge').classList.remove('active');
+  document.getElementById('focus-hint').style.display = 'none';
+  document.getElementById('highlight-panel').style.display = 'none';
+  document.getElementById('gTitle').textContent = curGal || '知识图谱星系';
+  document.getElementById('gLvl').textContent = curLv === 'gal' ? '银河系 · ' + GAL.length + '个' : '☉ 太阳系';
+}
+
+// ===== 数据加载 =====
+function loadSectorData(name, callback) {
+  var encoded = encodeURIComponent(name);
+  d3.json('data/sector-' + encoded + '.json').then(function(data) {
+    callback(data);
+  }).catch(function(err) {
+    console.error('Failed to load sector:', name, err);
+    callback({ entities: [], edges: [] });
+  });
+}
+
+function loadEdgeIndex(callback) {
+  if (EIX) { callback(); return; }
+  d3.json('data/edge-index.json').then(function(data) {
+    EIX = data;
+    // 构建实体映射
+    Object.keys(EIX).forEach(function(key) {
+      EIX[key].forEach(function(link) {
+        var src = typeof link.source === 'object' ? link.source.id : link.source;
+        var tgt = typeof link.target === 'object' ? link.target.id : link.target;
+        if (!em[src]) em[src] = { id: src, name: src };
+        if (!em[tgt]) em[tgt] = { id: tgt, name: tgt };
+      });
+    });
+    callback();
+  }).catch(function(err) {
+    console.error('Failed to load edgeIndex:', err);
+    callback();
+  });
+}
+
+// ===== 节点详情 =====
 function showD(n) {
   if (!EIX || !EIX[n.id]) {
-    // Try loading edgeIndex
     loadEdgeIndex(function() {
-      if (EIX && EIX[n.id]) {
-        showD(n);
-      } else {
+      if (EIX && EIX[n.id]) showD(n);
+      else {
         document.getElementById('dContent').innerHTML = '<div style="color:#888;text-align:center;padding:10px">无关联数据</div>';
         document.getElementById('node-detail').style.display = 'block';
       }
@@ -540,165 +732,78 @@ function showD(n) {
   var e = em[n.id];
   if (!e) return;
   var rs = (EIX[n.id] || []).slice(0, 25);
-  var html = '<h2><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + e.color + '"></span>' + e.name + '<span class="nd-type" style="background:' + e.color + '22;color:' + e.color + '">' + e.typeLabel + '</span></h2><div class="nd-meta">🏛 ' + (e.industry || '未分类') + '</div>' + (e.desc ? '<div class="nd-desc">' + e.desc + '</div>' : '');
+  var html = '<h2><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + (e.color || '#888') + '"></span>' + e.name + (e.typeLabel ? '<span class="nd-type" style="background:' + (e.color || '#888') + '22;color:' + (e.color || '#888') + '">' + e.typeLabel + '</span>' : '') + '</h2>';
+  html += '<div class="nd-meta">🏛 ' + (e.industry || '未分类') + '</div>';
+  if (e.desc) html += '<div class="nd-desc">' + e.desc + '</div>';
   if (rs.length) {
     html += '<div style="color:#888;font-size:10px;margin-bottom:3px">🔗 关系 (' + rs.length + '条)</div>';
     rs.forEach(function(l) {
       var o = em[l.source === n.id ? l.target : l.source];
       if (!o) return;
-      html += '<div class="nd-rel-item" onclick="closeD();focusE(' + "'" + o.id + "'" + ')">' +
-        '<span style="color:#888;font-size:8px">' + (l.source === n.id ? '→' : '←') + '</span>' +
-        '<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:' + l.color + ';flex-shrink:0"></span>' +
-        '<span style="font-size:8px;color:#999">' + l.type + '</span>' +
-        '<span style="flex:1;overflow:hidden;text-overflow:ellipsis">' + o.name + '</span></div>';
+      html += '<div class="nd-rel-item" onclick="showD(em[\'' + (l.source === n.id ? l.target : l.source) + '\'])">' +
+        '<span style="width:6px;height:6px;border-radius:50%;background:' + (o.color || '#888') + '"></span>' +
+        '<span>' + o.name + '</span>' +
+        '<span style="color:#666;font-size:9px;margin-left:auto">' + (l.type || '关联') + '</span></div>';
     });
   }
   document.getElementById('dContent').innerHTML = html;
   document.getElementById('node-detail').style.display = 'block';
 }
-
 function closeD() { document.getElementById('node-detail').style.display = 'none'; }
 
-function focusE(id) {
-  closeD();
-  if (curLv === 'gal' && em[id]) { solar(em[id].sector); }
-  setTimeout(function() {
-    if (!g) return;
-    var d = g.graphData();
-    var fn = d.nodes.find(function(n) { return n.id === id; });
-    if (!fn) return;
-    g.cameraPosition({ x: fn.x, y: fn.y, z: 40 }, { x: fn.x, y: fn.y, z: 0 }, 300);
-    g.zoomToFit(250, 30, function(n) { return n.id === id; });
-  }, 600);
+function updateStats(n, e) {
+  document.getElementById('sN').textContent = n;
+  document.getElementById('sE').textContent = e;
 }
 
-function goBack() { closeD(); exitFocus(); if (curLv === 'sol') { curSectorData = null; boot(GLR); } }
-function toggleRot() { autoRot = !autoRot; if (g && g.controls) g.controls().autoRotate = autoRot; }
-// Helper: highlight panel item click -> focus another node
-function focusHP(id) { exitFocus(); setTimeout(function(){focusE(id)},150); }
+// ===== 搜索 =====
+function searchNode(query) {
+  if (!query || query.length < 2) return;
+  query = query.toLowerCase();
 
-function searchNode(q) {
-  if (!q || q.length < 1) return;
-  q = q.toLowerCase();
+  // 在银河系中搜索
   if (curLv === 'gal') {
-    var m = GLR.find(function(gal) { return gal.name.toLowerCase().indexOf(q) >= 0; });
-    if (m) solar(m.name);
-  } else if (ENT) {
-    var es = ENT.filter(function(e) { return e.sector === curGal; });
-    var m = es.find(function(e) { return e.name.toLowerCase().indexOf(q) >= 0; });
-    if (m && g) {
-      var fd = g.graphData();
-      var fn = fd.nodes.find(function(n) { return n.id === m.id; });
-      if (fn) {
-        g.cameraPosition({ x: fn.x, y: fn.y, z: 40 }, { x: fn.x, y: fn.y, z: 0 }, 200);
-        g.zoomToFit(200, 20, function(n) { return n.id === m.id; });
-      }
+    var found = GAL.find(function(d) { return d.name.toLowerCase().includes(query); });
+    if (found) {
+      solar(found.name);
+      document.getElementById('search').value = '';
+    }
+    return;
+  }
+
+  // 在太阳系/聚焦中搜索
+  var d = g ? g.selectAll('.node').data() : [];
+  // 简单搜索：在已加载数据中查找
+  if (EIX) {
+    var foundId = Object.keys(EIX).find(function(k) {
+      return (em[k] && em[k].name.toLowerCase().includes(query));
+    });
+    if (foundId && em[foundId]) {
+      focusMode(em[foundId]);
+      document.getElementById('search').value = '';
     }
   }
 }
 
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') { closeD(); exitFocus(); }
-  if (e.key === 'r' || e.key === 'R') toggleRot();
-  if (e.key === 'Backspace') { closeD(); exitFocus(); if (curLv === 'sol') goBack(); }
-});
-
-document.body.addEventListener('mousemove', function(e) {
-  var t = document.getElementById('tooltip');
-  if (t.style.display === 'block') {
-    t.style.left = Math.min(e.clientX + 10, window.innerWidth - 260) + 'px';
-    t.style.top = Math.min(e.clientY + 10, window.innerHeight - 150) + 'px';
-  }
-});
-
-window.addEventListener('resize', function() { if (g) { g.width(window.innerWidth); g.height(window.innerHeight); } });
-
 // ===== 初始化 =====
-// 按需加载（Lazy Loading）- 首次只加载银河系索引，进入太阳系才加载行业数据
-var loadStartTime = Date.now();
-var ENT = null, EDG = null, EIX = null, em = {};
-var edgeIndexLoaded = false;
-var curSectorData = null; // 当前太阳系缓存
+initSVG();
+renderGalaxy();
 
-document.getElementById('loadInfo').textContent = '⏳ 加载星系索引...';
-
-// 30秒超时保护
-var loadTimeout = setTimeout(function() {
-  if (!ENT && !curSectorData) {
-    document.getElementById('loadInfo').innerHTML = '⛔ 加载超时(30s)<br>请检查网络或使用WiFi';
-    document.getElementById('retryArea').style.display = 'block';
-    document.getElementById('gLvl').textContent = '银河系 · 加载失败';
+// 窗口大小变化
+window.addEventListener('resize', function() {
+  W = window.innerWidth;
+  H = window.innerHeight;
+  if (simulation) {
+    simulation.force('center', d3.forceCenter(W/2, H/2));
+    simulation.alpha(0.1).restart();
   }
-}, 30000);
+  svg.attr('width', W).attr('height', H);
+});
 
-// 加载银河系索引
-function loadGalaxyIndex() {
-  return fetch('data/data-index.json').then(function(r) {
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    return r.json();
-  }).then(function(glr) {
-    clearTimeout(loadTimeout);
-    boot(glr);
-    var elapsed = Math.round((Date.now()-loadStartTime)/1000);
-    document.getElementById('loadInfo').textContent = '✓ 银河系已加载 (' + elapsed + 's)';
-    setTimeout(function(){ document.getElementById('loading').style.display = 'none'; }, 600);
-  }).catch(function(e) {
-    clearTimeout(loadTimeout);
-    console.error('银河系索引加载失败:', e);
-    document.getElementById('loadInfo').innerHTML = '⛔ 银河系索引加载失败<br><span style="font-size:9px;color:#555">' + (e.message || '网络异常') + '</span>';
-    document.getElementById('retryArea').style.display = 'block';
-    document.getElementById('gLvl').textContent = '银河系 · 加载失败';
-  });
-}
-
-// 加载太阳系数据
-function loadSectorData(sectorName, callback) {
-  if (curSectorData && curSectorData.name === sectorName) {
-    callback(curSectorData);
-    return;
-  }
-  var safeName = sectorName.replace('-', '_').replace(' ', '_');
-  var url = 'data/sector-' + safeName + '.json';
-  document.getElementById('loadInfo').textContent = '📥 加载 ' + sectorName + '...';
-  document.getElementById('gLvl').textContent = '银河系 · 下载中';
-  
-  fetch(url).then(function(r) {
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    return r.json();
-  }).then(function(data) {
-    curSectorData = { name: sectorName, entities: data.entities, edges: data.edges };
-    // 填充 em 映射
-    data.entities.forEach(function(e) { em[e.id] = e; });
-    callback(data);
-  }).catch(function(e) {
-    console.error('行业数据加载失败:', e);
-    document.getElementById('loadInfo').innerHTML = '⛔ ' + sectorName + ' 数据加载失败<br><span style="font-size:9px;color:#555">' + (e.message || '网络异常') + '</span>';
-    document.getElementById('retryArea').style.display = 'block';
-  });
-}
-
-// 加载 edgeIndex（聚焦时按需加载）
-function loadEdgeIndex(callback) {
-  if (edgeIndexLoaded) {
-    callback();
-    return;
-  }
-  document.getElementById('loadInfo').textContent = '📥 加载关系索引...';
-  fetch('data/edge-index.json').then(function(r) {
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    return r.json();
-  }).then(function(idx) {
-    EIX = idx;
-    edgeIndexLoaded = true;
-    callback();
-  }).catch(function(e) {
-    console.error('edgeIndex加载失败:', e);
-    document.getElementById('loadInfo').innerHTML = '⛔ 关系索引加载失败<br><span style="font-size:9px;color:#555">' + (e.message || '网络异常') + '</span>';
-  });
-}
-
-// 启动加载
-loadGalaxyIndex();
+// ESC 退出聚焦
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && curFocus) exitFocus();
+});
 </script>
 </body>
 </html>
