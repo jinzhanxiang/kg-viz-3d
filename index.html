@@ -689,6 +689,7 @@ function focusMode(node) {
 function doFocusMode(node) {
   if (focusTimer) { clearTimeout(focusTimer); focusTimer = null; }
   closeD();
+  curFocus = node;
 
   document.getElementById('gTitle').textContent = node.name;
   document.getElementById('gLvl').textContent = '🔍 聚焦模式';
