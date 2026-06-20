@@ -69,12 +69,25 @@ body{font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;backgr
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://unpkg.com/3d-force-graph@1.67.0/dist/3d-force-graph.min.js"></script>
 <script>
-(function(){
-  var L=document.getElementById('loading'), overlay=document.getElementById('transition-overlay');
-  var a=0,b=0;
-  function go(){if(a&&b){L.style.display='none';boot()}}
-  a=1;b=1;go(); // CDN已用静态script，直接启动
-})();
+// 等待CDN加载完成
+function waitForCDNs(callback) {
+  var maxWait = 10000; // 10秒超时
+  var check = function() {
+    if (typeof THREE !== 'undefined' && typeof ForceGraph3D === 'function') {
+      callback();
+    } else if (Date.now() - startTime > maxWait) {
+      console.error('CDN加载超时');
+      document.getElementById('loadInfo').textContent = 'CDN加载超时，请刷新页面';
+    } else {
+      setTimeout(check, 100);
+    }
+  };
+  var startTime = Date.now();
+  check();
+}
+
+waitForCDNs(function() {
+  var L = document.getElementById('loading'), overlay = document.getElementById('transition-overlay');
 
 // ===== 数据 =====
 var GLR=[{"name": "新能源电池行业", "count": 1961, "color": "#FF6B6B"}, {"name": "电力设备", "count": 1860, "color": "#FFB347"}, {"name": "医药", "count": 271, "color": "#FFD700"}, {"name": "半导体", "count": 246, "color": "#48C9B0"}, {"name": "低空经济", "count": 202, "color": "#4A90D9"}, {"name": "电力", "count": 165, "color": "#50C878"}, {"name": "机械设备", "count": 144, "color": "#9B59B6"}, {"name": "人工智能", "count": 123, "color": "#E91E63"}, {"name": "汽车零部件", "count": 118, "color": "#00BCD4"}, {"name": "有色金属", "count": 104, "color": "#8BC34A"}, {"name": "军工", "count": 87, "color": "#CDDC39"}, {"name": "科技-主题研究", "count": 60, "color": "#FF9800"}, {"name": "金融", "count": 51, "color": "#795548"}, {"name": "光伏设备", "count": 47, "color": "#607D8B"}, {"name": "证券", "count": 42, "color": "#E74C3C"}, {"name": "机械", "count": 30, "color": "#F39C12"}, {"name": "金融-主题研究", "count": 30, "color": "#1ABC9C"}, {"name": "金融-跨领域研究", "count": 29, "color": "#3498DB"}, {"name": "消费", "count": 17, "color": "#2ECC71"}, {"name": "地产", "count": 13, "color": "#9B59B6"}, {"name": "未分类", "count": 6, "color": "#34495E"}, {"name": "金融-宏观分析", "count": 6, "color": "#16A085"}, {"name": "宏观分析", "count": 5, "color": "#D35400"}], ENT=null, EDG=null, EIX=null, em={};
@@ -383,75 +396,79 @@ function focusAndHighlight(node) {
   // 4. 创建动态箭头动画（从中心节点指向关联节点）
   setTimeout(function() {
     if (!g) return;
-    var scene = g.scene();
-    if (!scene) return;
-    
-    relatedNodes.forEach(function(rn, idx) {
-      // 创建箭头几何体
-      var start = new THREE.Vector3(node.x, node.y, node.z);
-      var end = new THREE.Vector3(rn.x, rn.y, rn.z);
-      var direction = new THREE.Vector3().subVectors(end, start);
-      var distance = direction.length();
+    // 使用 onBackground 钩子访问 Three.js scene
+    var sceneAdded = false;
+    g.onBackground(function(scene, camera) {
+      if (sceneAdded || !scene) return;
+      sceneAdded = true;
       
-      if (distance < 1) return;
-      
-      direction.normalize();
-      
-      // 创建圆柱体作为箭头
-      var arrowGeo = new THREE.CylinderGeometry(0.08, 0.08, distance, 6, 1);
-      arrowGeo.translate(0, distance / 2, 0);
-      arrowGeo.rotateTo(direction, new THREE.Vector3(1, 0, 0));
-      
-      var arrowMat = new THREE.MeshBasicMaterial({
-        color: rn.color,
-        transparent: true,
-        opacity: 0.8,
-        depthWrite: false
-      });
-      
-      var arrow = new THREE.Mesh(arrowGeo, arrowMat);
-      arrow.position.copy(start);
-      arrow.lookAt(end);
-      arrow.renderOrder = 100;
-      
-      // 添加箭头头部
-      var headGeo = new THREE.ConeGeometry(0.25, 0.6, 6);
-      headGeo.translate(0, distance - 0.3, 0);
-      headGeo.rotateTo(direction, new THREE.Vector3(1, 0, 0));
-      var headMat = new THREE.MeshBasicMaterial({ color: rn.color, transparent: true, opacity: 0.9 });
-      var head = new THREE.Mesh(headGeo, headMat);
-      head.position.copy(start);
-      head.lookAt(end);
-      head.renderOrder = 100;
-      
-      arrow.add(head);
-      scene.add(arrow);
-      highlightArrows.push(arrow);
-      
-      // 动画：从中心节点发射到关联节点
-      var progress = 0;
-      var duration = 800 + idx * 150; // 错开动画
-      var startTime = Date.now();
-      
-      function animateArrow() {
-        if (!g || !arrow.parent) return;
-        var elapsed = Date.now() - startTime;
-        progress = Math.min(1, elapsed / duration);
+      relatedNodes.forEach(function(rn, idx) {
+        // 创建箭头几何体
+        var start = new THREE.Vector3(node.x, node.y, node.z);
+        var end = new THREE.Vector3(rn.x, rn.y, rn.z);
+        var direction = new THREE.Vector3().subVectors(end, start);
+        var distance = direction.length();
         
-        // 使用缓动函数
-        var eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+        if (distance < 1) return;
         
-        arrow.material.opacity = 0.8 * (1 - eased * 0.5);
+        direction.normalize();
         
-        if (progress < 1) {
-          requestAnimationFrame(animateArrow);
-        } else {
-          // 动画完成后淡出
-          fadeOutArrow(arrow);
+        // 创建圆柱体作为箭头
+        var arrowGeo = new THREE.CylinderGeometry(0.08, 0.08, distance, 6, 1);
+        arrowGeo.translate(0, distance / 2, 0);
+        arrowGeo.rotateTo(direction, new THREE.Vector3(1, 0, 0));
+        
+        var arrowMat = new THREE.MeshBasicMaterial({
+          color: rn.color,
+          transparent: true,
+          opacity: 0.8,
+          depthWrite: false
+        });
+        
+        var arrow = new THREE.Mesh(arrowGeo, arrowMat);
+        arrow.position.copy(start);
+        arrow.lookAt(end);
+        arrow.renderOrder = 100;
+        
+        // 添加箭头头部
+        var headGeo = new THREE.ConeGeometry(0.25, 0.6, 6);
+        headGeo.translate(0, distance - 0.3, 0);
+        headGeo.rotateTo(direction, new THREE.Vector3(1, 0, 0));
+        var headMat = new THREE.MeshBasicMaterial({ color: rn.color, transparent: true, opacity: 0.9 });
+        var head = new THREE.Mesh(headGeo, headMat);
+        head.position.copy(start);
+        head.lookAt(end);
+        head.renderOrder = 100;
+        
+        arrow.add(head);
+        scene.add(arrow);
+        highlightArrows.push(arrow);
+        
+        // 动画：从中心节点发射到关联节点
+        var progress = 0;
+        var duration = 800 + idx * 150; // 错开动画
+        var startTime = Date.now();
+        
+        function animateArrow() {
+          if (!g || !arrow.parent) return;
+          var elapsed = Date.now() - startTime;
+          progress = Math.min(1, elapsed / duration);
+          
+          // 使用缓动函数
+          var eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+          
+          arrow.material.opacity = 0.8 * (1 - eased * 0.5);
+          
+          if (progress < 1) {
+            requestAnimationFrame(animateArrow);
+          } else {
+            // 动画完成后淡出
+            fadeOutArrow(arrow);
+          }
         }
-      }
-      
-      requestAnimationFrame(animateArrow);
+        
+        requestAnimationFrame(animateArrow);
+      });
     });
   }, 600);
   
@@ -563,6 +580,7 @@ document.body.addEventListener('mousemove', function(e) {
 });
 
 window.addEventListener('resize', function() { if (g) { g.width(window.innerWidth); g.height(window.innerHeight); } });
+}); // 结束 waitForCDNs 回调
 </script>
 </body>
 </html>
