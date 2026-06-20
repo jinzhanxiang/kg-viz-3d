@@ -339,6 +339,20 @@ function render3d(nodes, edges, opt) {
       fitCamera();
     }, 200);
     
+    // Force depthWrite=true on all link cylinders to prevent occlusion
+    setTimeout(function() {
+      try {
+        var sg = g.scene().children.find(function(c) { return c.type === 'Group'; });
+        if (sg) {
+          sg.children.forEach(function(c) {
+            if (c.type === 'Mesh' && c.material && c.material.depthWrite === false) {
+              c.material.depthWrite = true;
+            }
+          });
+        }
+      } catch(e) { console.error('link fix err:', e); }
+    }, 500);
+    
     g.onNodeClick(function(n) {
       if (curLv === 'gal') {
         solar(n.name);
