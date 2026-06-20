@@ -248,10 +248,24 @@ function renderGalaxy() {
     .attr('opacity', 0.85);
 
   node.append('text')
-    .attr('dy', function(d) { return d.val + 12; })
-    .attr('text-anchor', 'middle')
+    .attr('dy', function(d) {
+      var angle = Math.atan2(d.y - H/2, d.x - W/2);
+      if (angle > Math.PI * 0.6 || angle < -Math.PI * 0.6) return -(d.val + 4);
+      return d.val + 14;
+    })
+    .attr('text-anchor', function(d) {
+      var angle = Math.atan2(d.y - H/2, d.x - W/2);
+      if (angle > Math.PI * 0.6 || angle < -Math.PI * 0.6) return 'middle';
+      if (angle > -0.6 && angle < 0.6) return 'middle';
+      if (angle > 0) return 'end';
+      return 'start';
+    })
     .attr('fill', '#ddd').attr('font-size', '10px')
-    .text(function(d) { return d.name + '\n' + '(' + d.count + '家)'; });
+    .each(function(d) {
+      var t = d3.select(this);
+      t.append('tspan').attr('x', 0).attr('dy', 0).text(d.name);
+      t.append('tspan').attr('x', 0).attr('dy', '1.2em').text('(' + d.count + '家)');
+    });
 
   node.on('click', function(event, d) {
     solar(d.name);
@@ -518,13 +532,23 @@ function renderForceGraph(nodes, links, options) {
     .attr('stroke-width', function(d) { return d.nodeType === 'star' ? 2 : 1; })
     .attr('opacity', 0.85);
 
-  // 节点标签
+  // 节点标签（用 tspan 支持换行，避免乱码）
   node.append('text')
     .attr('dy', function(d) { return (options.nodeRadius || function(n){return n.val||5;})(d) + 10; })
     .attr('text-anchor', 'middle')
     .attr('fill', '#ddd').attr('font-size', '9px')
     .attr('pointer-events', 'none')
-    .text(options.label || function(d) { return d.name; });
+    .each(function(d) {
+      var t = d3.select(this);
+      var label = (options.label || function(n) { return n.name; })(d);
+      var parts = String(label).split('\n');
+      parts.forEach(function(ln, i) {
+        t.append('tspan')
+          .attr('x', 0)
+          .attr('dy', i === 0 ? 0 : '1.2em')
+          .text(ln);
+      });
+    });
 
   // 节点点击
   node.on('click', function(event, n) {
@@ -887,10 +911,24 @@ function backToGalaxy() {
     .attr('opacity', 0);
 
   node.append('text')
-    .attr('dy', function(d) { return d.val + 12; })
-    .attr('text-anchor', 'middle')
+    .attr('dy', function(d) {
+      var angle = Math.atan2(d.y - H/2, d.x - W/2);
+      if (angle > Math.PI * 0.6 || angle < -Math.PI * 0.6) return -(d.val + 4);
+      return d.val + 14;
+    })
+    .attr('text-anchor', function(d) {
+      var angle = Math.atan2(d.y - H/2, d.x - W/2);
+      if (angle > Math.PI * 0.6 || angle < -Math.PI * 0.6) return 'middle';
+      if (angle > -0.6 && angle < 0.6) return 'middle';
+      if (angle > 0) return 'end';
+      return 'start';
+    })
     .attr('fill', '#ddd').attr('font-size', '10px')
-    .text(function(d) { return d.name + '\n' + '(' + d.count + '家)'; });
+    .each(function(d) {
+      var t = d3.select(this);
+      t.append('tspan').attr('x', 0).attr('dy', 0).text(d.name);
+      t.append('tspan').attr('x', 0).attr('dy', '1.2em').text('(' + d.count + '家)');
+    });
 
   node.on('click', function(event, d) { solar(d.name); });
   node.on('mouseover', function(event, d) {
