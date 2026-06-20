@@ -575,14 +575,31 @@ function renderForceGraph(nodes, links, options) {
     });
   });
 
-  // 初始冷却
+  // 模拟运行结束 → 自动缩放适配
   simulation.on('end', function() {
-    // 模拟运行结束，保持当前状态
+    fitView(g, nodes);
+    // 释放中心节点固定（太阳系视图时）
+    if (options.focusNode) {
+      setTimeout(function() {
+        if (window[curFocus ? 'curFocus' : 'none']) return;
+        options.focusNode.fx = null;
+        options.focusNode.fy = null;
+      }, 2000);
+    }
   });
 
-  // 自动缩放适配（移动端稍等冷却更充分）
-  var fitDelay = W < 500 ? 1200 : 500;
-  setTimeout(function() { fitView(g, nodes); }, fitDelay);
+  // 模拟初期也周期性尝试适配（防止永不结束的情况）
+  var fitAttempts = 0;
+  var fitTimer = setInterval(function() {
+    fitAttempts++;
+    var settled = nodes.filter(function(n) {
+      return Math.abs(n.vx || 0) < 0.5 && Math.abs(n.vy || 0) < 0.5;
+    }).length;
+    if (settled > nodes.length * 0.7 || fitAttempts > 30) {
+      fitView(g, nodes);
+      clearInterval(fitTimer);
+    }
+  }, 1000);
 }
 
 function dragStarted2(event, d) {
