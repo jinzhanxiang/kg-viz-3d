@@ -7,20 +7,23 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;overflow:hidden;background:#0a0e17;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#e0e0e0}
-#sigma-container{position:fixed;inset:0;width:100%;height:100%}
-#sigma-container canvas{display:block;width:100%!important;height:100%!important}
-#loading{position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0a0e17;transition:opacity .5s}
+#sigma-container{width:100%;height:100%}
+#loading{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0a0e17;z-index:999;transition:opacity .4s}
 #loading.hidden{opacity:0;pointer-events:none}
-#loading .spinner{width:40px;height:40px;border:3px solid rgba(255,255,255,0.1);border-top-color:#4C78A8;border-radius:50%;animation:spin .8s linear infinite}
-#loading p{margin-top:16px;font-size:14px;color:#888}
+.spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,0.08);border-top:3px solid #4C78A8;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px}
 @keyframes spin{to{transform:rotate(360deg)}}
-#stats{position:fixed;top:12px;left:12px;z-index:100;font-size:12px;color:#666;background:rgba(10,14,23,0.8);backdrop-filter:blur(8px);padding:8px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);pointer-events:none;line-height:1.6}
-#stats strong{color:#aaa}
+#loading p{font-size:13px;color:#666}
+#stats{position:fixed;top:12px;left:12px;z-index:100;font-size:11px;background:rgba(10,14,23,0.85);backdrop-filter:blur(8px);padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);pointer-events:none}
+#level-ind{position:fixed;top:42px;left:12px;z-index:100;font-size:11px;background:rgba(10,14,23,0.85);backdrop-filter:blur(8px);padding:5px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);color:#888;pointer-events:none}
+#level-ind strong{color:#e0e0e0}
+#back-btn{position:fixed;top:12px;right:60px;z-index:150;width:28px;height:28px;border:none;background:rgba(255,255,255,0.06);border-radius:6px;color:#666;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+#back-btn:hover{background:rgba(255,255,255,0.12);color:#fff}
 #tooltip{position:fixed;z-index:200;display:none;max-width:300px;background:rgba(20,26,40,0.95);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 14px;font-size:12px;line-height:1.5;pointer-events:none;z-index:200}
 #tooltip .tt-name{font-size:13px;font-weight:600;color:#fff;margin-bottom:4px}
 #tooltip .tt-industry{color:#888}
 #tooltip .tt-desc{color:#999;margin-top:4px;font-size:11px}
 #tooltip .tt-degree{color:#4C78A8;font-size:11px;margin-top:2px}
+#tooltip .tt-hint{color:#54A24B;font-size:10px;margin-top:4px;font-style:italic}
 #legend{position:fixed;bottom:12px;left:12px;z-index:100;font-size:11px;background:rgba(10,14,23,0.85);backdrop-filter:blur(8px);padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);max-height:40vh;overflow-y:auto;pointer-events:none}
 #legend .lg-item{display:flex;align-items:center;gap:6px;margin:2px 0;white-space:nowrap}
 #legend .lg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
@@ -53,6 +56,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0e17;font-family:
 .sd-more{text-align:center;padding:6px;font-size:11px;color:#555}
 @media(max-width:600px){
   #stats{font-size:10px;padding:5px 10px;top:8px;left:8px}
+  #level-ind{font-size:10px;padding:4px 8px;top:36px;left:8px}
+  #back-btn{top:8px;right:44px;width:26px;height:26px}
   #legend{font-size:10px;padding:6px 10px;bottom:8px;left:8px;max-height:30vh}
   #tooltip{max-width:200px;font-size:11px;padding:8px 10px}
   #detail-panel{width:calc(100vw - 16px);top:8px;right:8px;max-height:calc(100vh - 16px)}
@@ -66,6 +71,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0e17;font-family:
 <div id="search-wrap"><input id="search" type="text" placeholder="搜索节点..." autocomplete="off"><div id="search-dropdown"></div></div>
 <div id="loading"><div class="spinner"></div><p>加载知识图谱数据...</p></div>
 <div id="stats">节点 <strong id="s-nodes">0</strong> · 边 <strong id="s-edges">0</strong> · 行业 <strong id="s-industries">0</strong></div>
+<div id="level-ind"></div>
+<button id="back-btn">←</button>
 <div id="legend"></div>
 <div id="tooltip"></div>
 <div id="detail-panel" class="hidden"></div>
