@@ -77,14 +77,48 @@ async function init() {
     hideDetail();
     showLevelInd('l2', industry);
 
+    // Count entities in this industry and calculate bounding box
+    let entityCount = 0;
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    G.forEachNode((k, a) => {
+      if (a._level === 'entity' && a.ind === industry) {
+        entityCount++;
+        if (a.x < minX) minX = a.x;
+        if (a.x > maxX) maxX = a.x;
+        if (a.y < minY) minY = a.y;
+        if (a.y > maxY) maxY = a.y;
+      }
+    });
+
+    // Choose camera ratio and node size scale based on entity count
+    let targetRatio, sizeScale;
+    if (entityCount < 50) {
+      targetRatio = 3.0;
+      sizeScale = 1.5;
+    } else if (entityCount < 200) {
+      targetRatio = 1.5;
+      sizeScale = 2.0;
+    } else if (entityCount < 500) {
+      targetRatio = 0.8;
+      sizeScale = 2.5;
+    } else if (entityCount < 1000) {
+      targetRatio = 0.5;
+      sizeScale = 3.0;
+    } else {
+      targetRatio = 0.3;
+      sizeScale = 4.0;
+    }
+
     sigma.setSetting('nodeReducer', (n, d) => {
       // Show industry nodes but dimmed, highlight active industry
       if (d._level === 'industry') {
         if (d.ind === industry) return { ...d, size: d.size * 1.2, color: '#fff', zIndex: 2 };
         return { ...d, hidden: true };
       }
-      // Show entities in this industry
-      if (d.ind === industry) return d;
+      // Show entities in this industry with scaled-up sizes
+      if (d.ind === industry) {
+        return { ...d, size: d.size * sizeScale, label: d.label };
+      }
       return { ...d, hidden: true, label: '', size: 0 };
     });
     sigma.setSetting('edgeReducer', null);
@@ -94,7 +128,7 @@ async function init() {
     if (G.hasNode(indKey)) {
       const x = G.getNodeAttribute(indKey, 'x');
       const y = G.getNodeAttribute(indKey, 'y');
-      sigma.getCamera().animate({ x, y, ratio: 0.1 }, { duration: 500 });
+      sigma.getCamera().animate({ x, y, ratio: targetRatio }, { duration: 500 });
     }
   }
 
@@ -133,7 +167,7 @@ async function init() {
     sigma.getCamera().animate({
       x: G.getNodeAttribute(node, 'x'),
       y: G.getNodeAttribute(node, 'y'),
-      ratio: 0.05,
+      ratio: 0.4,
     }, { duration: 500 });
   }
 
