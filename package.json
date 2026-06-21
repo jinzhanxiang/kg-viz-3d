@@ -1,0 +1,14 @@
+{
+  "name": "kg-viz-3d",
+  "version": "4.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/main.js --bundle --minify --outfile=dist/bundle.js",
+    "dev": "esbuild src/main.js --bundle --sourcemap --outfile=dist/bundle.js --watch"
+  },
+  "dependencies": {
+    "sigma": "^2.3.0",
+    "graphology": "^0.25.4"
+  }
+}
